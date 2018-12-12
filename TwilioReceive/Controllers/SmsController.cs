@@ -56,7 +56,8 @@ namespace TwilioReceive.Controllers
 
             if (requestBody == @"help"
                     || requestBody == @"help?"
-                    || requestBody == @"???")
+                    || requestBody == @"???"
+                    || requestBody == @"?")
             {
                 StringBuilder helpMsg = new StringBuilder();
 
@@ -70,8 +71,9 @@ namespace TwilioReceive.Controllers
                 helpMsg.AppendLine("FAF: Sign-up for Fast Access");
                 helpMsg.AppendLine("help?: this list");
                 helpMsg.AppendLine("join: resend welcome message");
+                //helpMsg.AppendLine("unjoin: reverse join (for testing)");
                 helpMsg.AppendLine("Settings: view/update alert settings");
-                helpMsg.AppendLine("whoami: for testing");
+                helpMsg.AppendLine("User: Account Details");
                 response.Message(helpMsg.ToString());
             }
             else if (requestBody == @"summary")
@@ -90,7 +92,7 @@ namespace TwilioReceive.Controllers
 
                 response.Message(salesInfo);
             }
-            else if (requestBody == @"cback" || requestBody == @"Chargebacks")
+            else if (requestBody == @"cback" || requestBody == @"chargeback" || requestBody == @"chargebacks")
             {
                 DateTime xctPostingDate = DateTime.Today;
 
@@ -133,13 +135,19 @@ namespace TwilioReceive.Controllers
 
                 response.Message($"{welcomeMsg}\n{configMsg}");
             }
+            else if (requestBody == @"unjoin")
+            {
+                string unjoinMsg = MerchantController.ResetAcceptedJoin(merchant.merchant_id);
+
+                response.Message(unjoinMsg);
+            }
             else if (requestBody == @"config" || requestBody == @"settings")
             {
                 string msg = MerchantController.BuildConfigMessage(merchant.merchant_id);
                 response.Message(msg);
 
             }
-            else if (requestBody == @"whoami")
+            else if (requestBody == @"user" || requestBody == @"whoami")
             {
                 string msg = $"Hi {merchant.primary_contact.first_name} !\n{merchant.merchant_name} [id: {merchant.merchant_id}]\np: {merchant.primary_contact.phone_no}";
                 response.Message(msg);

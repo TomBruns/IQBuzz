@@ -137,6 +137,19 @@ namespace WP.Learning.BizLogic.Shared.Merchant
             return returnMsg;
         }
 
+        public static void FireClosedEventsForAllMerchants()
+        {
+            for (int merchantId = 1; merchantId <= 8; merchantId++)
+            {
+                var merchant = MongoDBContext.FindMerchantById(merchantId);
+                DateTime xctPostingDate = DateTime.Today;
+
+                var xctSummaryMsg = BuildSummaryMessage(merchantId, xctPostingDate);
+
+                TwilioController.SendSMSMessage(merchant.primary_contact.phone_no, xctSummaryMsg);
+            }
+        }
+
         public static string BuildUndoFAFMessage(int merchantId, DateTime xctPostingDate)
         {
             string response = string.Empty;
@@ -166,6 +179,20 @@ namespace WP.Learning.BizLogic.Shared.Merchant
             return response;
         }
 
+        public static string ResetAcceptedJoin(int merchantId)
+        {
+            var merchant = MongoDBContext.FindMerchantById(merchantId);
+
+            merchant.setup_options.is_accepted_welcome_agreement = false;
+
+            MongoDBContext.UpdateMerchant(merchant);
+
+            string returnMsg = "Welcome Acceptance reset";
+
+            return returnMsg;
+
+        }
+
         public static string BuildConfirmFAFMessage(int merchantId, DateTime xctPostingDate)
         {
             string response = string.Empty;
@@ -181,14 +208,14 @@ namespace WP.Learning.BizLogic.Shared.Merchant
             if (!merchantDailyActivity.is_fast_access_funding_enabled.HasValue
                  || !merchantDailyActivity.is_fast_access_funding_enabled.Value)
             {
-                response = @"Funds for this Final Settlement amount WILL now be deposited via FastAccess tomorrow morning.";
+                response = @"Funds for the Final Settlement amount will now be deposited via FastAccess tomorrow morning.";
 
                 merchantDailyActivity.is_fast_access_funding_enabled = true;
                 MongoDBContext.UpdateMerchantDailyActivity(merchantDailyActivity);
             }
             else
             {
-                response = @"Funds for this Final Settlement amount are already set to be deposited via FastAccess tomorrow morning.";
+                response = @"Funds for the Final Settlement amount are already set to be deposited via FastAccess tomorrow morning.";
             }
 
             return response;
@@ -266,6 +293,8 @@ namespace WP.Learning.BizLogic.Shared.Merchant
 
         public static string BuildSummaryMessage(int merchantId, DateTime xctPostingDate)
         {
+            MerchantMBE merchant = MongoDBContext.FindMerchantById(merchantId);
+
             XctDailySummaryBE xctSummary = MerchantController.GetXctDailySummary(merchantId, xctPostingDate);
 
             StringBuilder sb = new StringBuilder();
@@ -289,7 +318,7 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                 sb.AppendLine($"Net Total:  {xctSummary.SummaryByXctType.Sum(x => x.XctTotalValue):C}");
                 sb.AppendLine("(all Card Transactions)");
                 sb.AppendLine("\n");
-                sb.AppendLine($"Final settlement amount will be deposited into your checking account ending in xxxx on {DateTime.Now.AddDays(3).ToString("ddd MMM dd, yyyy")} -- to" +
+                sb.AppendLine($"Final settlement amount will be deposited into your checking account ending in {merchant.setup_options.debit_card_no.Substring(1,4)} on {DateTime.Now.AddBusinessDays(2).ToString("ddd MMM dd, yyyy")} -- to" +
                     " receive these funds tomorrow morning reply FAF");
             }
             else
@@ -482,13 +511,14 @@ namespace WP.Learning.BizLogic.Shared.Merchant
 
             var welcomeMsg = BuildWelcomeMessage(merchant);
             var configMsg = BuildConfigMessage(merchant.merchant_id);
-            TwilioController.SendSMSMessage(merchant.primary_contact.phone_no, $"{welcomeMsg}\n{configMsg}");
+            //TwilioController.SendSMSMessage(merchant.primary_contact.phone_no, $"{welcomeMsg}\n{configMsg}");
+            TwilioController.SendSMSMessage(merchant.primary_contact.phone_no, $"{welcomeMsg}");
         }
 
         public static string BuildWelcomeMessage(MerchantMBE merchant)
         {
-            var welcomeMsg = $"Welcome {merchant.merchant_name } " +
-                $"Reply YES to confirm enrollment in {GeneralConstants.APP_NAME}. Msg&Data rates may appy. Msg freq varies by acct and prefs. Txt HELP? for info.";
+            var welcomeMsg = $"Welcome {merchant.merchant_name } to IQ Buzz\n" +
+                $"Reply YES to confirm enrollment in {GeneralConstants.APP_NAME}. Msg&Data rates may appy. Msg freq varies by acct and prefs.";
 
             return welcomeMsg;
         }

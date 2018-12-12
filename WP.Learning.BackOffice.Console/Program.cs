@@ -10,6 +10,11 @@ namespace WP.Learning.BackOffice.Console
     {
         static void Main(string[] args)
         {
+            DisplayMenu();
+        }
+
+        static void DisplayMenu()
+        { 
             // display options menu
             ConsoleColor defaultColor = ConsoleColor.Gray;
             System.Console.ForegroundColor = defaultColor;
@@ -34,6 +39,7 @@ namespace WP.Learning.BackOffice.Console
             System.Console.WriteLine("2.3   Generate Returns");
             System.Console.WriteLine("2.4   Generate Chargebacks");
             System.Console.WriteLine("2.5   Fire All Terminals Closed Event");
+            System.Console.WriteLine("2.6   Fire Closed Event for all Merchants");
             System.Console.WriteLine("");
             System.Console.ForegroundColor = ConsoleColor.Magenta;
             System.Console.WriteLine("=== Support ===========================");
@@ -43,7 +49,7 @@ namespace WP.Learning.BackOffice.Console
             System.Console.WriteLine("3.3   Send Welcome Message");
             System.Console.WriteLine("");
             System.Console.WriteLine();
-            System.Console.Write("Enter # or Hit <enter> to Exit");
+            System.Console.Write("Enter # or 0 to Exit");
             System.Console.ForegroundColor = ConsoleColor.Green;
             System.Console.Write(" > ");
             System.Console.ForegroundColor = defaultColor;
@@ -88,6 +94,12 @@ namespace WP.Learning.BackOffice.Console
                     MerchantController.FireAllTerminalsClosedEvent(merchantId);
                     break;
 
+                case 2.6M:  // Fire all terminals closed event
+                    System.Console.Write("MerchantId:> ");
+                    merchantId = Int32.Parse(System.Console.ReadLine());
+                    MerchantController.FireClosedEventsForAllMerchants();
+                    break;
+
                 case 3.1M:  // Create Merchant
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
@@ -106,6 +118,11 @@ namespace WP.Learning.BackOffice.Console
 
                 default:
                     break;
+            }
+
+            if(selection != 0)
+            {
+                DisplayMenu();
             }
         }
     }
