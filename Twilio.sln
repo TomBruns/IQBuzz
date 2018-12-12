@@ -1,0 +1,66 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28315.86
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TwilioSend", "TwilioSend\TwilioSend.csproj", "{6E007AF9-DB4B-4274-8AED-90210821BD30}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TwilioReceive", "TwilioReceive\TwilioReceive.csproj", "{31F26774-D9CF-46C8-87B4-CA2344EA7453}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5E65AC8F-314B-4D30-B76A-0B5D94540D9D}"
+	ProjectSection(SolutionItems) = preProject
+		ReadMe.txt = ReadMe.txt
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WP.Learning.MongoDB", "WP.Learning.MongoDB\WP.Learning.MongoDB.csproj", "{C8D1F7AC-2A5C-4DF8-B320-670737D68105}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WP.Learning.MongoDB.UnitTests", "WP.Learning.MongoDB.UnitTests\WP.Learning.MongoDB.UnitTests.csproj", "{651FF049-6736-40B2-86AA-C6A467D871EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WP.Learning.Hangfire.Server", "WP.Learning.Hangfire.Server\WP.Learning.Hangfire.Server.csproj", "{A789C655-08D4-440D-86D6-A1872380E4EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WP.Learning.BackOffice.Console", "WP.Learning.BackOffice.Console\WP.Learning.BackOffice.Console.csproj", "{9735EEFD-85DA-4CFB-A029-496D93B70601}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WP.Learning.BizLogic.Shared", "WP.Learning.BizLogic.Shared\WP.Learning.BizLogic.Shared.csproj", "{52C0236C-2F68-40B5-AEFF-E8B0249A5FC5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6E007AF9-DB4B-4274-8AED-90210821BD30}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E007AF9-DB4B-4274-8AED-90210821BD30}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E007AF9-DB4B-4274-8AED-90210821BD30}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E007AF9-DB4B-4274-8AED-90210821BD30}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31F26774-D9CF-46C8-87B4-CA2344EA7453}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31F26774-D9CF-46C8-87B4-CA2344EA7453}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31F26774-D9CF-46C8-87B4-CA2344EA7453}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31F26774-D9CF-46C8-87B4-CA2344EA7453}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8D1F7AC-2A5C-4DF8-B320-670737D68105}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8D1F7AC-2A5C-4DF8-B320-670737D68105}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8D1F7AC-2A5C-4DF8-B320-670737D68105}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8D1F7AC-2A5C-4DF8-B320-670737D68105}.Release|Any CPU.Build.0 = Release|Any CPU
+		{651FF049-6736-40B2-86AA-C6A467D871EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{651FF049-6736-40B2-86AA-C6A467D871EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{651FF049-6736-40B2-86AA-C6A467D871EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{651FF049-6736-40B2-86AA-C6A467D871EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A789C655-08D4-440D-86D6-A1872380E4EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A789C655-08D4-440D-86D6-A1872380E4EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A789C655-08D4-440D-86D6-A1872380E4EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A789C655-08D4-440D-86D6-A1872380E4EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9735EEFD-85DA-4CFB-A029-496D93B70601}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9735EEFD-85DA-4CFB-A029-496D93B70601}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9735EEFD-85DA-4CFB-A029-496D93B70601}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9735EEFD-85DA-4CFB-A029-496D93B70601}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52C0236C-2F68-40B5-AEFF-E8B0249A5FC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52C0236C-2F68-40B5-AEFF-E8B0249A5FC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52C0236C-2F68-40B5-AEFF-E8B0249A5FC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52C0236C-2F68-40B5-AEFF-E8B0249A5FC5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E28B68CA-6D74-40B6-84E8-B4E3B568C653}
+	EndGlobalSection
+EndGlobal
