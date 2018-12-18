@@ -21,6 +21,8 @@ namespace WP.Learning.BizLogic.Shared.Entities
 
         public decimal XctTotalValue { get; set; }
 
+        public bool isAuthFailure { get; set; }
+
         public string XctTypeDesc
         {
             get
@@ -30,9 +32,9 @@ namespace WP.Learning.BizLogic.Shared.Entities
                     case TRANSACTION_TYPE.chargeback:
                         return @"Chargebacks";
                     case TRANSACTION_TYPE.cnp_sale:
-                        return @"Online Sales";
+                        return !isAuthFailure ? @"Online Sales" : @"Online Sales (Auth Failure)";
                     case TRANSACTION_TYPE.cp_sale:
-                        return @"In-Store Sales";
+                        return !isAuthFailure ? @"In-Store Sales" : @"In-Store Sales (Auth Failure)";
                     case TRANSACTION_TYPE.credit_return:
                         return @"Returns";
                     default:

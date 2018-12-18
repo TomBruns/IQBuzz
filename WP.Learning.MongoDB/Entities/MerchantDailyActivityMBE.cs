@@ -38,6 +38,7 @@ namespace WP.Learning.MongoDB.Entities
         public PaymentCardDataMBE card_data { get; set; }
         public decimal xct_amount { get; set; }
         public TRANSACTION_TYPE xct_type { get; set; }
+        public bool is_Auth_Failed { get; set; }
     }
 
     // defines the payment card data

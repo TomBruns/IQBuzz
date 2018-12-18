@@ -242,59 +242,84 @@ namespace WP.Learning.BizLogic.Shared.Merchant
 
             if (merchantActivity != null && merchantActivity.transactions != null && merchantActivity.transactions.Count() > 0)
             {
+                // ----------------------------------
+                // Card Present (In-Store) Xcts
+                // ----------------------------------
+                // auth success
                 var cpSalesXcts = merchantActivity.transactions
-                                    .Where(x => x.xct_type == Enums.TRANSACTION_TYPE.cp_sale).ToList();
+                                    .Where(x => x.xct_type == Enums.TRANSACTION_TYPE.cp_sale
+                                            && !x.is_Auth_Failed).ToList();
 
                 decimal cpSales = cpSalesXcts.Sum(x => x.xct_amount);
                 int cpQty = cpSalesXcts.Count();
 
+                // failed auth
+                var cpSalesFailedAuthXcts = merchantActivity.transactions
+                                                .Where(x => x.xct_type == Enums.TRANSACTION_TYPE.cp_sale
+                                                        && x.is_Auth_Failed).ToList();
+                int cpFailedAuthQty = cpSalesFailedAuthXcts.Count();
+
+                decimal cpTotalQty = cpQty + cpFailedAuthQty;   // force to decimal to avoid integer division
+                decimal? cpSalesPassesAuthPercentage = cpTotalQty > 0 ? cpQty / cpTotalQty : (decimal?) null;
+
                 sb.AppendLine($"In-Store:");
-                if (cpSalesXcts != null && cpSalesXcts.Count() > 0)
+                if (cpTotalQty > 0)
                 {
 
-                    sb.AppendLine($"{cpSales:C} [{cpQty} txns]");
+                    sb.AppendLine($"{cpSales:C} [{cpQty} txns] Auth: {cpSalesPassesAuthPercentage:P}");
                 }
                 else
                 {
-                    sb.AppendLine($"$0.00 [0 txns]");
-                    //sb.AppendLine(@"There are no sales activity yet today.");
+                    sb.AppendLine($"$0.00 [0 txns] Auth: N/A%");
                 }
 
                 sb.AppendLine();
 
+                // ----------------------------------
+                // Card Not Present (On-line) Xcts
+                // ----------------------------------
                 var cnpSalesXcts = merchantActivity.transactions
-                    .Where(x => x.xct_type == Enums.TRANSACTION_TYPE.cnp_sale).ToList();
+                    .Where(x => x.xct_type == Enums.TRANSACTION_TYPE.cnp_sale
+                            && !x.is_Auth_Failed).ToList();
 
                 decimal cnpSales = cnpSalesXcts.Sum(x => x.xct_amount);
                 int cnpQty = cnpSalesXcts.Count();
 
+                var cnpSalesFailedAuthXcts = merchantActivity.transactions
+                                                .Where(x => x.xct_type == Enums.TRANSACTION_TYPE.cnp_sale
+                                                        && x.is_Auth_Failed).ToList();
+                int cnpFailedAuthQty = cnpSalesFailedAuthXcts.Count();
+
+                decimal cnpTotalQty = cnpQty + cnpFailedAuthQty;   // force to decimal to avoid integer division
+                decimal? cnpSalesPassesAuthPercentage = cnpTotalQty > 0 ? cnpQty / cnpTotalQty : (decimal?)null;
+
                 sb.AppendLine($"Online:");
-                if (cnpSalesXcts != null && cnpSalesXcts.Count() > 0)
+                if (cnpTotalQty > 0)
                 {
 
-                    sb.AppendLine($"{cnpSales:C} [{cnpQty} txns]");
+                    sb.AppendLine($"{cnpSales:C} [{cnpQty} txns] Auth: {cnpSalesPassesAuthPercentage:P}");
                 }
                 else
                 {
-                    sb.AppendLine($"$0.00 [0 txns]");
-                    //sb.AppendLine(@"There are no sales activity yet today.");
+                    sb.AppendLine($"$0.00 [0 txns] Auth: N/A%");
                 }
 
-                sb.AppendLine($"------------------------");
-                sb.AppendLine($"Total: {(cpSales + cnpSales):C} [{cpQty + cnpQty} txns]");
+                decimal allSalesPassesAuthPercentage = (cpQty + cnpQty) / (cpTotalQty + cnpTotalQty);
+
+                sb.AppendLine($"------------------------------");
+                sb.AppendLine($"Total: {(cpSales + cnpSales):C} [{cpQty + cnpQty} txns] Auth {allSalesPassesAuthPercentage:P}");
                 sb.AppendLine("(all Card Transactions)");
             }
             else
             {
                 sb.AppendLine($"In-Store:");
-                sb.AppendLine($"$0.00 [0 txns]");
+                sb.AppendLine($"$0.00 [0 txns] Auth N/A");
                 sb.AppendLine();
                 sb.AppendLine($"Online:");
-                sb.AppendLine($"$0.00 [0 txns]");
-                sb.AppendLine($"------------------------");
-                sb.AppendLine($"Total: $0.00 [0 txns]");
+                sb.AppendLine($"$0.00 [0 txns] Auth N/A");
+                sb.AppendLine($"-------------------------------");
+                sb.AppendLine($"Total: $0.00 [0 txns] Auth N/A");
                 sb.AppendLine("(all Card Transactions)");
-                //sb.AppendLine(@"There are no activity yet today.");
             }
 
             return sb.ToString();
@@ -527,12 +552,13 @@ namespace WP.Learning.BizLogic.Shared.Merchant
 
                 results.SummaryByXctType = merchantActivity.transactions
                                     .OrderBy(x => x.xct_type)
-                                    .GroupBy(x => x.xct_type)
+                                    .GroupBy(x => new { x.xct_type, x.is_Auth_Failed})
                                     .Select(x => new XctTypeDailySummaryBE()
                                     {
-                                        XctType = x.Key,
+                                        XctType = x.Key.xct_type,
                                         XctCount = x.Count(),
-                                        XctTotalValue = x.Sum(r => r.xct_amount)
+                                        XctTotalValue = x.Sum(r => r.xct_amount),
+                                        isAuthFailure = x.Key.is_Auth_Failed
                                     }).ToList();
 
             }
@@ -549,10 +575,8 @@ namespace WP.Learning.BizLogic.Shared.Merchant
         /// <remarks>
         /// Used to drive demos
         /// </remarks>
-        public static void GenerateSalesXcts(int merchantId)
+        public static int GenerateSalesXcts(int merchantId, DateTime xctPostingDate)
         {
-            DateTime xctPostingDate = DateTime.Today;
-
             // get merchant metadata (MDB ??)
             var merchant = MongoDBContext.FindMerchantById(merchantId);
 
@@ -589,18 +613,19 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                     xct_dt = DateTime.Now,
                     xct_id = Guid.NewGuid(),
                     xct_type = (cardPresentIndicator % 2 == 0) ?
-                            Enums.TRANSACTION_TYPE.cp_sale : Enums.TRANSACTION_TYPE.cnp_sale
+                            Enums.TRANSACTION_TYPE.cp_sale : Enums.TRANSACTION_TYPE.cnp_sale,
+                    is_Auth_Failed = (xctCntToGenerate > 10 && loopCtr == xctCntToGenerate) ? true : false
                 });
             }
 
             // store xcts
             MongoDBContext.UpsertMerchantDailyActivity(merchantId, xctPostingDate, transactions);
+
+            return xctCntToGenerate;
         }
 
-        public static void GenerateRefundXcts(int merchantId)
+        public static int GenerateRefundXcts(int merchantId, DateTime xctPostingDate)
         {
-            DateTime xctPostingDate = DateTime.Today;
-
             // get merchant metadata (MDB ??)
             var merchant = MongoDBContext.FindMerchantById(merchantId);
 
@@ -640,12 +665,12 @@ namespace WP.Learning.BizLogic.Shared.Merchant
 
             // store xcts
             MongoDBContext.UpsertMerchantDailyActivity(merchantId, xctPostingDate, transactions);
+
+            return xctCntToGenerate;
         }
 
-        public static void GenerateChargebacksXcts(int merchantId)
+        public static int GenerateChargebacksXcts(int merchantId, DateTime xctPostingDate)
         {
-            DateTime xctPostingDate = DateTime.Today;
-
             // get merchant metadata (MDB ??)
             var merchant = MongoDBContext.FindMerchantById(merchantId);
 
@@ -690,6 +715,19 @@ namespace WP.Learning.BizLogic.Shared.Merchant
 
             // store xcts
             MongoDBContext.UpsertMerchantDailyActivity(merchantId, xctPostingDate, transactions);
+
+            return xctCntToGenerate;
+        }
+
+        public static int GenerateSampleXcts(int merchantId, DateTime xctPostingDate)
+        {
+            int xctsGenerated = 0;
+
+            xctsGenerated += GenerateSalesXcts(merchantId, xctPostingDate);
+            xctsGenerated += GenerateRefundXcts(merchantId, xctPostingDate);
+            xctsGenerated += GenerateChargebacksXcts(merchantId, xctPostingDate);
+
+            return xctsGenerated;
         }
 
         #endregion

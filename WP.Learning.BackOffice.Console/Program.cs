@@ -42,12 +42,17 @@ namespace WP.Learning.BackOffice.Console
             System.Console.WriteLine("2.6   Fire Closed Event for all Merchants");
             System.Console.WriteLine("");
             System.Console.ForegroundColor = ConsoleColor.Magenta;
+            System.Console.WriteLine("=== Build Summaries ===========================");
+            System.Console.ForegroundColor = defaultColor;
+            System.Console.WriteLine("3.1   Sales");
+            System.Console.WriteLine("");
+            System.Console.ForegroundColor = ConsoleColor.Magenta;
             System.Console.WriteLine("=== Support ===========================");
             System.Console.ForegroundColor = defaultColor;
-            System.Console.WriteLine("3.1   Load Merchant");
-            System.Console.WriteLine("3.2   Load ALL Merchants");
-            System.Console.WriteLine("3.3   Reload ALL Merchants");
-            System.Console.WriteLine("3.4   Send Welcome Message");
+            System.Console.WriteLine("4.1   Load Merchant");
+            System.Console.WriteLine("4.2   Load ALL Merchants");
+            System.Console.WriteLine("4.3   Reload ALL Merchants");
+            System.Console.WriteLine("4.4   Send Welcome Message");
             System.Console.WriteLine("");
             System.Console.WriteLine();
             System.Console.Write("Enter # or 0 to Exit");
@@ -74,19 +79,19 @@ namespace WP.Learning.BackOffice.Console
                 case 2.2M:  // Purchases for Merchant N
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
-                    MerchantController.GenerateSalesXcts(merchantId);
+                    MerchantController.GenerateSalesXcts(merchantId, DateTime.Today);
                     break;
 
                 case 2.3M:  // Generate refunds
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
-                    MerchantController.GenerateRefundXcts(merchantId);
+                    MerchantController.GenerateRefundXcts(merchantId, DateTime.Today);
                     break;
 
                 case 2.4M:  // Generate chargebacks
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
-                    MerchantController.GenerateChargebacksXcts(merchantId);
+                    MerchantController.GenerateChargebacksXcts(merchantId, DateTime.Today);
                     break;
 
                 case 2.5M:  // Fire all terminals closed event
@@ -101,21 +106,31 @@ namespace WP.Learning.BackOffice.Console
                     MerchantController.FireClosedEventsForAllMerchants();
                     break;
 
-                case 3.1M:  // Create Merchant
+                case 3.1M:  // Build Sales Summary
+                    System.Console.Write("MerchantId:> ");
+                    merchantId = Int32.Parse(System.Console.ReadLine());
+
+                    DateTime today = DateTime.Today.ToUniversalTime();
+                    DateTime xctPostingDate = new DateTime(today.Year, today.Month, today.Day, 0, 0, 0, DateTimeKind.Utc);
+
+                    MerchantController.BuildSalesSummaryMessage(merchantId, xctPostingDate);
+                    break;
+
+                case 4.1M:  // Create Merchant
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
                     MerchantController.CreateMerchant(merchantId, false);
                     break;
 
-                case 3.2M:  // Create All Merchants
+                case 4.2M:  // Create All Merchants
                     MerchantController.CreateAllMerchants(false);
                     break;
 
-                case 3.3M:  // Recreate All Merchants
+                case 4.3M:  // Recreate All Merchants
                     MerchantController.CreateAllMerchants(true);
                     break;
 
-                case 3.4M:  // Send Welcome Message
+                case 4.4M:  // Send Welcome Message
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
                     MerchantController.SendWelcomeMessage(merchantId);
