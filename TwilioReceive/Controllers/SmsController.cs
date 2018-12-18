@@ -10,6 +10,7 @@ using Twilio.AspNet.Common;
 using Twilio.AspNet.Core;
 using Twilio.TwiML;
 using Twilio.TwiML.Messaging;
+using WP.Learning.BizLogic.Shared;
 using WP.Learning.BizLogic.Shared.Entities;
 using WP.Learning.BizLogic.Shared.Merchant;
 using WP.Learning.MongoDB.Entities;
@@ -21,38 +22,28 @@ namespace TwilioReceive.Controllers
         [HttpPost]
         public TwiMLResult Index(SmsRequest incomingMessage)
         {
-            #region early stuff
-            // Step 1: Fixed Text
-            //var messagingResponse = new MessagingResponse();
-            //messagingResponse.Message("The copy cat says: " + incomingMessage.Body);
-
-            // Step 2: Media
-            // respond with media
-            //var message = new Message();
-            //message.Body("The Robots are coming! Head for the hills!");
-            //message.Media(new Uri(@"https://farm8.staticflickr.com/7090/6941316406_80b4d6d50e_z_d.jpg"));
-
-            //var messagingResponse = new MessagingResponse();
-            //messagingResponse.Message(message);
-            //messagingResponse.Append(message);
-            #endregion
-
-            // Step 3: Variable Reponse
             string requestBody = incomingMessage.Body.ToLower().Trim();
 
-            string requestBody2 = Regex.Replace(requestBody, @"\s+", string.Empty);
-            if (requestBody2.StartsWith(@"saleshttps://"))
-            {
-                requestBody = "sales_alexa";
-            }
+            //string requestBody2 = Regex.Replace(requestBody, @"\s+", string.Empty);
+            //if (requestBody2.StartsWith(@"saleshttps://"))
+            //{
+            //    requestBody = "sales_alexa";
+            //}
 
-            // format of sending phoen no is: "+15134986016"
+            // format of sending phone no is: "+15134986016"
             string fromPhoneNumber = incomingMessage.From;
 
             var response = new MessagingResponse();
 
             // lookup the merchant using the incoming phone number
             MerchantMBE merchant = MerchantController.LookupMerchant(fromPhoneNumber);
+
+            // make sure this is a valid phone #
+            if(merchant == null)
+            {
+                response.Message($"HTTP 404 :) Phone #: {fromPhoneNumber} is not associated with a Merchant record.");
+                return TwiML(response);
+            }
 
             if (requestBody == @"help"
                     || requestBody == @"help?"
@@ -80,7 +71,7 @@ namespace TwilioReceive.Controllers
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                string salesInfo = MerchantController.BuildSummaryMessage(merchant.merchant_id, xctPostingDate);
+                string salesInfo = MerchantController.BuildOverallSummaryMessage(merchant.merchant_id, xctPostingDate);
 
                 response.Message(salesInfo);
             }
@@ -158,7 +149,7 @@ namespace TwilioReceive.Controllers
             }
             else if (requestBody == @"yes") // welcome accept
             {
-                string msg = MerchantController.AcceptWelcomeMessage(merchant.merchant_id, true);
+                string msg = MerchantController.StoreAcceptWelcomeMessageResponse(merchant.merchant_id, true);
                 response.Message(msg);
             }
             else if (requestBody == @"status")
@@ -175,10 +166,22 @@ namespace TwilioReceive.Controllers
                 string welcomeMsg = MerchantController.BuildWelcomeMessage(merchant);
                 response.Message(welcomeMsg);
             }
-            else if (requestBody == @"testaccept")
+            //else if (requestBody == @"testaccept")
+            //{
+            //    string welcomeMsg = MerchantController.TestWelcomeAccept(merchant.merchant_id);
+            //    response.Message(welcomeMsg);
+            //}
+            else if (requestBody == @"ver")
             {
-                string welcomeMsg = MerchantController.TestWelcomeAccept(merchant.merchant_id);
-                response.Message(welcomeMsg);
+                // get the d/t this assy was built
+                System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                System.IO.FileInfo fileInfo = new System.IO.FileInfo(assembly.Location);
+                DateTime lastModifiedLocal = fileInfo.LastWriteTime;
+                //TimeZoneInfo localZone = TimeZoneInfo.Local;
+                TimeZoneInfo estZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+                DateTime lastModifiedLocalEST = TimeZoneInfo.ConvertTime(lastModifiedLocal, estZone);
+
+                response.Message($"{GeneralConstants.APP_NAME} Build: [{lastModifiedLocalEST}] ");
             }
             else
             {

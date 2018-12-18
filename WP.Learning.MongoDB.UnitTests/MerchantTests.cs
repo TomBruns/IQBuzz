@@ -119,6 +119,14 @@ namespace WP.Learning.MongoDB.UnitTests
             Assert.Throws<InvalidOperationException>(() => MongoDBContext.FindMerchantByPrimaryContactPhoneNo(phone_no));
         }
 
+        [Fact, Order(6)]
+        public void TestFindNonExistentMerchantById()
+        {
+            var merchant = MongoDBContext.FindMerchantById(-1);
+
+            Assert.Null(merchant);
+        }
+
         // ========================
         // Merchant Daily Activity Tests
         // ========================
@@ -275,7 +283,7 @@ public class MerchantTestsGlobal : IDisposable
     public MerchantTestsGlobal()
     {
         // Do "global" initialization here; Only called once.
-        var mdaDeleteResult = MongoDBContext.DeleteAllMerchantDailyActivity();
+        var mdaDeleteResult = MongoDBContext.DeleteAllMerchantsDailyActivity();
 
         var mDeleteResult = MongoDBContext.DeleteAllMerchants();
 

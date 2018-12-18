@@ -15,11 +15,11 @@ namespace WP.Learning.BizLogic.Shared.Entities
 
     public class XctTypeDailySummaryBE
     {
-   //     public string XctType { get; set; }
-        public int XctCount { get; set; }
-        public decimal XctTotalValue { get; set; }
-
         public TRANSACTION_TYPE XctType { get; set; }
+
+        public int XctCount { get; set; }
+
+        public decimal XctTotalValue { get; set; }
 
         public string XctTypeDesc
         {
@@ -29,16 +29,12 @@ namespace WP.Learning.BizLogic.Shared.Entities
                 {
                     case TRANSACTION_TYPE.chargeback:
                         return @"Chargebacks";
-                        break;
                     case TRANSACTION_TYPE.cnp_sale:
                         return @"Online Sales";
-                        break;
                     case TRANSACTION_TYPE.cp_sale:
                         return @"In-Store Sales";
-                        break;
                     case TRANSACTION_TYPE.credit_return:
                         return @"Returns";
-                        break;
                     default:
                         return @"Unknown";
                 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Authentication;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -21,35 +22,68 @@ namespace WP.Learning.MongoDB
     // http://mongodb.github.io/mongo-csharp-driver/2.7/reference/driver/crud/writing/#insert
     public static class MongoDBContext
     {
-        const string SERVER_NAME = @"localhost";
-        const int PORT_NUMBER = 27017;
+        const bool IS_USE_LOCAL = false;
+
+        const string LOCAL_SERVER_NAME = @"localhost";
+        const int LOCAL_PORT_NUMBER = 27017;
+
+        const string CLOUD_HOST_NAME = @"wpiqbuzzmongodb.documents.azure.com";
+        const int CLOUD_PORT_NUMBER = 10255;
+        const string CLOUD_USERNAME = @"wpiqbuzzmongodb";
+        const string CLOUD_PASSWORD = @"D4zUXpJDDBhqQi8w76IDgaipo8Azqr4NcVLJOajyuJQPEDW42GAUuAQUcQUVyDvx7uz95EDO2To7huauoS3O9w==";
+
         const string DB_NAME = @"gfos2";
 
-        internal static (string SERVER_NAME, int DB_PORT_NUMBER, string DB_NAME) GetMongoDBConnectionInfo()
+        internal static MongoClient GetMongoClient()
         {
-            // normally I would read config from a app config file
-            string serverName = SERVER_NAME;
-            int dbPortNumber = PORT_NUMBER;
-            string dbName = DB_NAME;
+            MongoClient client = null;
 
-            return (serverName, dbPortNumber, dbName);
+            if (IS_USE_LOCAL)
+            {
+                // connect to local Mongo Instance
+                client = new MongoClient($"mongodb://{LOCAL_SERVER_NAME}:{LOCAL_PORT_NUMBER}");
+            }
+            else
+            {
+                MongoClientSettings settings = new MongoClientSettings()
+                {
+                    Server = new MongoServerAddress(CLOUD_HOST_NAME, CLOUD_PORT_NUMBER),
+                    UseSsl = true,
+                    SslSettings = new SslSettings()
+                    {
+                        EnabledSslProtocols = SslProtocols.Tls12
+                    }
+                };
+
+                MongoIdentity identity = new MongoInternalIdentity(DB_NAME, CLOUD_USERNAME);
+                MongoIdentityEvidence evidence = new PasswordEvidence(CLOUD_PASSWORD);
+
+                settings.Credential = new MongoCredential("SCRAM-SHA-1", identity, evidence);
+
+                // connect to Cloud Cosmos acting like Mongo Instance
+                client = new MongoClient(settings);
+            }
+
+            return client;
         }
 
         public static void BootstrapMongoSchema()
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
-
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
+            var client = GetMongoClient();
 
             // will create the DB if it does not exist
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
 
             #region ConfigDataMBE
             // will create the collection if it does not exist
             var configData = db.GetCollection<ConfigDataItemMBE>(ConfigDataItemMBE.COLLECTION_NAME);
 
             // create index on StdRequestTypeMBE
-            configData.Indexes.CreateOne(Builders<ConfigDataItemMBE>.IndexKeys.Ascending(_ => _.name), new CreateIndexOptions() { Unique = true });
+            //configData.Indexes.CreateOne(Builders<ConfigDataItemMBE>.IndexKeys.Ascending(_ => _.name), new CreateIndexOptions() { Unique = true });
+
+            // 1=asc, -1=desc
+            IndexKeysDefinition<ConfigDataItemMBE> cdeKeys = "{ name : 1 }";
+            configData.Indexes.CreateOne(new CreateIndexModel<ConfigDataItemMBE>(cdeKeys, new CreateIndexOptions() { Unique = true }));
             #endregion
 
             #region MerchantMBE
@@ -57,7 +91,10 @@ namespace WP.Learning.MongoDB
             var merchants = db.GetCollection<MerchantMBE>(MerchantMBE.COLLECTION_NAME);
 
             // create index on StdRequestTypeMBE
-            merchants.Indexes.CreateOne(Builders<MerchantMBE>.IndexKeys.Ascending(_ => _.merchant_id), new CreateIndexOptions() { Unique = true });
+            //merchants.Indexes.CreateOne(Builders<MerchantMBE>.IndexKeys.Ascending(_ => _.merchant_id), new CreateIndexOptions() { Unique = true });
+
+            IndexKeysDefinition<MerchantMBE> mKeys = "{ merchant_id : 1 }";
+            merchants.Indexes.CreateOne(new CreateIndexModel<MerchantMBE>(mKeys, new CreateIndexOptions() { Unique = true }));
             #endregion
 
             #region MerchantDailyActivityMBE
@@ -65,11 +102,14 @@ namespace WP.Learning.MongoDB
             var merchantDailyActivity = db.GetCollection<MerchantDailyActivityMBE>(MerchantDailyActivityMBE.COLLECTION_NAME);
 
             // create index on StdHierRequestTypeMBE
-            merchantDailyActivity.Indexes.CreateOne(Builders<MerchantDailyActivityMBE>.IndexKeys.Combine(
-                    Builders<MerchantDailyActivityMBE>.IndexKeys.Ascending(f => f.merchant_id),
-                    Builders<MerchantDailyActivityMBE>.IndexKeys.Ascending(f => f.xct_posting_date)
-                ),
-                new CreateIndexOptions() { Unique = true });
+            //merchantDailyActivity.Indexes.CreateOne(Builders<MerchantDailyActivityMBE>.IndexKeys.Combine(
+                        //    Builders<MerchantDailyActivityMBE>.IndexKeys.Ascending(f => f.merchant_id),
+                        //    Builders<MerchantDailyActivityMBE>.IndexKeys.Ascending(f => f.xct_posting_date)
+                        //),
+                        //new CreateIndexOptions() { Unique = true });
+
+            IndexKeysDefinition<MerchantDailyActivityMBE> mDAKeys = "{ merchant_id : 1,  xct_posting_date : 1}";
+            merchantDailyActivity.Indexes.CreateOne(new CreateIndexModel<MerchantDailyActivityMBE>(mDAKeys, new CreateIndexOptions() { Unique = true }));
 
             #endregion
         }
@@ -77,11 +117,9 @@ namespace WP.Learning.MongoDB
         // ==== ConfigDataMBE ====================================
         public static List<ConfigDataItemMBE> GetAllConfigData()
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
             var collection = db.GetCollection<ConfigDataItemMBE>(ConfigDataItemMBE.COLLECTION_NAME);
 
             // Finding all the documents in a collection is done with an empty filter, only expect to have 1
@@ -100,11 +138,9 @@ namespace WP.Learning.MongoDB
 
         public static void InsertConfigData(string configItemName, string configItemData)
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
             var collection = db.GetCollection<ConfigDataItemMBE>(ConfigDataItemMBE.COLLECTION_NAME);
 
             collection.InsertOne(new ConfigDataItemMBE() { name = configItemName, value = configItemData });
@@ -112,11 +148,9 @@ namespace WP.Learning.MongoDB
 
         public static DeleteResult DeleteAllConfigData()
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
 
             var collection = db.GetCollection<ConfigDataItemMBE>(ConfigDataItemMBE.COLLECTION_NAME);
 
@@ -129,43 +163,51 @@ namespace WP.Learning.MongoDB
         // ==== MerchantMBE ====================================
         public static MerchantMBE FindMerchantById(int merchant_id)
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
             var collection = db.GetCollection<MerchantMBE>(MerchantMBE.COLLECTION_NAME);
 
             var filter = Builders<MerchantMBE>.Filter.Where(_ => _.merchant_id == merchant_id);
 
-            var requestInstance = collection.Find(filter).First();
+            var requestInstance = collection.Find(filter);
 
-            return requestInstance;
+            if (requestInstance == null || requestInstance.CountDocuments() == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return requestInstance.First();
+            }
         }
 
         public static MerchantMBE FindMerchantByPrimaryContactPhoneNo(string phone_no)
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
             var collection = db.GetCollection<MerchantMBE>(MerchantMBE.COLLECTION_NAME);
 
             var filter = Builders<MerchantMBE>.Filter.Where(_ => _.primary_contact.phone_no == phone_no);
 
-            var requestInstance = collection.Find(filter).First();
+            var requestInstance = collection.Find(filter);
 
-            return requestInstance;
+            if (requestInstance == null || requestInstance.CountDocuments() == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return requestInstance.First();
+            }
         }
 
         public static void InsertMerchant(MerchantMBE merchant)
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
             var collection = db.GetCollection<MerchantMBE>(MerchantMBE.COLLECTION_NAME);
 
             collection.InsertOne(merchant);
@@ -173,11 +215,9 @@ namespace WP.Learning.MongoDB
 
         public static void UpdateMerchant(MerchantMBE merchant)
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
             var collection = db.GetCollection<MerchantMBE>(MerchantMBE.COLLECTION_NAME);
 
             var filter = new BsonDocument("_id", merchant.ID);
@@ -186,11 +226,9 @@ namespace WP.Learning.MongoDB
 
         public static DeleteResult DeleteMerchant(int merchant_id)
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
 
             var collection = db.GetCollection<MerchantMBE>(MerchantMBE.COLLECTION_NAME);
 
@@ -201,11 +239,9 @@ namespace WP.Learning.MongoDB
 
         public static DeleteResult DeleteAllMerchants()
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
 
             var collection = db.GetCollection<MerchantMBE>(MerchantMBE.COLLECTION_NAME);
 
@@ -217,11 +253,9 @@ namespace WP.Learning.MongoDB
         // ==== MerchantDailyActivityMBE ========================
         public static MerchantDailyActivityMBE FindMerchantDailyActivity(int merchant_id, DateTime xct_posting_date)
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
             var collection = db.GetCollection<MerchantDailyActivityMBE>(MerchantDailyActivityMBE.COLLECTION_NAME);
 
             var filter = Builders<MerchantDailyActivityMBE>.Filter.Where(_ => _.merchant_id == merchant_id && _.xct_posting_date == xct_posting_date);
@@ -240,11 +274,9 @@ namespace WP.Learning.MongoDB
 
         public static void InsertMerchantDailyActivity(MerchantDailyActivityMBE merchantDailyActivity)
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
             var collection = db.GetCollection<MerchantDailyActivityMBE>(MerchantDailyActivityMBE.COLLECTION_NAME);
 
             collection.InsertOne(merchantDailyActivity);
@@ -252,11 +284,9 @@ namespace WP.Learning.MongoDB
 
         public static void UpdateMerchantDailyActivity(MerchantDailyActivityMBE merchantDailyActivity)
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
             var collection = db.GetCollection<MerchantDailyActivityMBE>(MerchantDailyActivityMBE.COLLECTION_NAME);
 
             var filter = new BsonDocument("_id", merchantDailyActivity.ID);
@@ -266,11 +296,9 @@ namespace WP.Learning.MongoDB
         // this one is thread safe daily_transactions
         public static void UpsertMerchantDailyActivity(int merchant_id, DateTime xct_posting_date, List<TransactionMBE> transactions)
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
             var collection = db.GetCollection<MerchantDailyActivityMBE>(MerchantDailyActivityMBE.COLLECTION_NAME);
 
             var merchantDailyActivity = FindMerchantDailyActivity(merchant_id, xct_posting_date);
@@ -313,11 +341,9 @@ namespace WP.Learning.MongoDB
 
         public static void UpsertMerchantDailyActivity(int merchant_id, DateTime xct_posting_date, List<TerminalStatusMBE> terminalsStatus)
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
             var collection = db.GetCollection<MerchantDailyActivityMBE>(MerchantDailyActivityMBE.COLLECTION_NAME);
 
             var merchantDailyActivity = FindMerchantDailyActivity(merchant_id, xct_posting_date);
@@ -353,13 +379,11 @@ namespace WP.Learning.MongoDB
                        );
         }
 
-        public static DeleteResult DeleteAllMerchantDailyActivity()
+        public static DeleteResult DeleteAllMerchantsDailyActivity()
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
 
             var collection = db.GetCollection<MerchantDailyActivityMBE>(MerchantDailyActivityMBE.COLLECTION_NAME);
 
@@ -370,11 +394,9 @@ namespace WP.Learning.MongoDB
 
         public static DeleteResult DeleteAllMerchantDailyActivity(int merchant_id)
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
 
             var collection = db.GetCollection<MerchantDailyActivityMBE>(MerchantDailyActivityMBE.COLLECTION_NAME);
 
@@ -385,11 +407,9 @@ namespace WP.Learning.MongoDB
 
         public static DeleteResult DeleteAllMerchantDailyActivity(int merchant_id, DateTime xct_posting_date)
         {
-            (string serverName, int portNumber, string dbName) = GetMongoDBConnectionInfo();
+            var client = GetMongoClient();
 
-            var client = new MongoClient($"mongodb://{serverName}:{portNumber}");
-
-            var db = client.GetDatabase(dbName);
+            var db = client.GetDatabase(DB_NAME);
 
             var collection = db.GetCollection<MerchantDailyActivityMBE>(MerchantDailyActivityMBE.COLLECTION_NAME);
 

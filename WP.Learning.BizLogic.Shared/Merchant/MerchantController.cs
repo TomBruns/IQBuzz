@@ -28,7 +28,7 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                 new PaymentCardDataMBE()
                 {
                     primary_account_no = @"4111111111111111",
-                    name = @"Visa User",
+                    name = @"Visa User 1",
                     additional_data =new AddtionalDataMBE()
                     {
                         expiration_date = @"2001",  // YYMM
@@ -36,10 +36,21 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                     },
                     discretionary_data = @"Foo"
                 },
+                 new PaymentCardDataMBE()
+                {
+                    primary_account_no = @"4012888888881881",
+                    name = @"Visa User 2",
+                    additional_data =new AddtionalDataMBE()
+                    {
+                        expiration_date = @"2005",  // YYMM
+                        service_code = @"KLM"
+                    },
+                    discretionary_data = @"Foo"
+                },
                 new PaymentCardDataMBE()
                 {
                     primary_account_no = @"5555555555554444",
-                    name = @"Mastercard User",
+                    name = @"Mastercard User 1",
                     additional_data =new AddtionalDataMBE()
                     {
                         expiration_date = @"2106",  // YYMM
@@ -47,10 +58,54 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                     },
                     discretionary_data = @"Bar"
                 },
+                 new PaymentCardDataMBE()
+                {
+                    primary_account_no = @"5105105105105100",
+                    name = @"Mastercard User 2",
+                    additional_data =new AddtionalDataMBE()
+                    {
+                        expiration_date = @"2006",  // YYMM
+                        service_code = @"ABC"
+                    },
+                    discretionary_data = @"Oreo"
+                },
                 new PaymentCardDataMBE()
                 {
                     primary_account_no = @"378282246310005",
-                    name = @"AmEx User",
+                    name = @"AmEx User 1",
+                    additional_data =new AddtionalDataMBE()
+                    {
+                        expiration_date = @"2212",  // YYMM
+                        service_code = @"DEF"
+                    },
+                    discretionary_data = @"42"
+                },
+                new PaymentCardDataMBE()
+                {
+                    primary_account_no = @"371449635398431",
+                    name = @"AmEx User 2",
+                    additional_data =new AddtionalDataMBE()
+                    {
+                        expiration_date = @"2212",  // YYMM
+                        service_code = @"DEF"
+                    },
+                    discretionary_data = @"42"
+                },
+                new PaymentCardDataMBE()
+                {
+                    primary_account_no = @"6011111111111117",
+                    name = @"Discover 1",
+                    additional_data =new AddtionalDataMBE()
+                    {
+                        expiration_date = @"2212",  // YYMM
+                        service_code = @"DEF"
+                    },
+                    discretionary_data = @"42"
+                },
+                new PaymentCardDataMBE()
+                {
+                    primary_account_no = @"6011000990139424",
+                    name = @"Discover 2",
                     additional_data =new AddtionalDataMBE()
                     {
                         expiration_date = @"2212",  // YYMM
@@ -61,124 +116,67 @@ namespace WP.Learning.BizLogic.Shared.Merchant
             };
         }
 
-        /// <summary>
-        /// Create and store a set of random transactions on the specified merchant
-        /// </summary>
-        /// <remarks>
-        /// Used to drive demos
-        /// </remarks>
-        public static void GenerateRandomPurchaseXcts(int merchantId)
-        {
-            DateTime xctPostingDate = DateTime.Today;
+        #region === Welcome Message =====================================================
 
-            // get merchant metadata (MDB ??)
+        /// <summary>
+        /// Build the text for the Welcome Message
+        /// </summary>
+        /// <param name="merchant"></param>
+        /// <returns></returns>
+        public static string BuildWelcomeMessage(MerchantMBE merchant)
+        {
+            var welcomeMsg = $"Welcome {merchant.merchant_name } to IQ Buzz\n" +
+                $"Reply YES to confirm enrollment in {GeneralConstants.APP_NAME}. Msg&Data rates may appy. Msg freq varies by acct and prefs.";
+
+            return welcomeMsg;
+        }
+        
+        /// <summary>
+        /// Used by the Backoffice to push a welcome message
+        /// </summary>
+        /// <param name="merchantId"></param>
+        public static void SendWelcomeMessage(int merchantId)
+        {
             var merchant = MongoDBContext.FindMerchantById(merchantId);
 
-            #region Optionally Create MerchantDailyActivity record (if reqd)
-            var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
+            var welcomeMsg = BuildWelcomeMessage(merchant);
 
-            if (merchantActivity == null)
-            { 
-                merchantActivity = new MerchantDailyActivityMBE()
-                {
-                    merchant_id = merchantId,
-                    xct_posting_date = xctPostingDate
-                };
-
-                MongoDBContext.InsertMerchantDailyActivity(merchantActivity);
-            }
-            #endregion
-      
-            int xctCntToGenerate = new Random().Next(5, 25);
-            Random amountGenerator = new Random();
-
-            var transactions = new List<TransactionMBE>();
-
-            // create a random # of purchase xcts
-            for (int loopCtr = 1; loopCtr <= xctCntToGenerate; loopCtr++)
-            {
-                int cardPresentIndicator = new Random().Next(1, 100);
-
-                transactions.Add(new TransactionMBE()
-                {
-                    terminal_id = merchant.terminals.OrderBy(t => Guid.NewGuid()).First().terminal_id,
-                    card_data = _paymentCards.OrderBy(t => Guid.NewGuid()).First(),
-                    xct_amount = Math.Round(new decimal(amountGenerator.NextDouble() * 1000.0), 2),
-                    xct_dt = DateTime.Now,
-                    xct_id = Guid.NewGuid(),
-                    xct_type = (cardPresentIndicator % 2 == 0) ?
-                            Enums.TRANSACTION_TYPE.cp_sale : Enums.TRANSACTION_TYPE.cnp_sale
-                });
-            }
-
-            // store xcts
-            MongoDBContext.UpsertMerchantDailyActivity(merchantId, xctPostingDate, transactions);
+            TwilioController.SendSMSMessage(merchant.primary_contact.phone_no, $"{welcomeMsg}");
         }
 
-        public static string AcceptWelcomeMessage(int merchantId, bool isAccepted)
+        /// <summary>
+        /// Process Welcome Acceptance reponse
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <param name="isAccepted"></param>
+        /// <returns></returns>
+        public static string StoreAcceptWelcomeMessageResponse(int merchantId, bool isAccepted)
         {
             // get merchant metadata (MDB ??)
             var merchant = MongoDBContext.FindMerchantById(merchantId);
 
             string returnMsg = string.Empty;
 
+            // they have already accepted
             if(merchant.setup_options.is_accepted_welcome_agreement)
             {
                 returnMsg = "Thanks for replying, you have already accepted!, Hint: You can always text HELP? or ??? to see a list of commands.";
             }
-            else
+            // they are accepting or declining now
+            else if(isAccepted)
             {
                 merchant.setup_options.is_accepted_welcome_agreement = isAccepted;
                 MongoDBContext.UpdateMerchant(merchant);
 
-                returnMsg = isAccepted ? $"Welcome to {GeneralConstants.APP_NAME}, you are all setup! Hint: You can always text HELP? or ??? to see a list of commands." : "We are sorry you choose not to join, text JOIN at any time to have an opportunity to accept.";
+                returnMsg = isAccepted 
+                        ? $"Welcome to {GeneralConstants.APP_NAME}, you are all setup! Hint: You can always text HELP? or ??? to see a list of commands." 
+                        : "We are sorry you choose not to join, text JOIN at any time to have another opportunity to accept.";
             }
 
             return returnMsg;
         }
 
-        public static void FireClosedEventsForAllMerchants()
-        {
-            for (int merchantId = 1; merchantId <= 8; merchantId++)
-            {
-                var merchant = MongoDBContext.FindMerchantById(merchantId);
-                DateTime xctPostingDate = DateTime.Today;
-
-                var xctSummaryMsg = BuildSummaryMessage(merchantId, xctPostingDate);
-
-                TwilioController.SendSMSMessage(merchant.primary_contact.phone_no, xctSummaryMsg);
-            }
-        }
-
-        public static string BuildUndoFAFMessage(int merchantId, DateTime xctPostingDate)
-        {
-            string response = string.Empty;
-
-            var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
-
-            if (merchantDailyActivity == null)
-            {
-                merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = xctPostingDate };
-                MongoDBContext.InsertMerchantDailyActivity(merchantDailyActivity);
-            }
-
-            if (!merchantDailyActivity.is_fast_access_funding_enabled.HasValue
-                 || !merchantDailyActivity.is_fast_access_funding_enabled.Value)
-            {
-                response = @"Funds for this Final Settlement amount are already set Not to use Fast Access Funding.";
-            }
-            else
-            {
-                response = @"Funds for this Final Settlement amount will Not use Fast Access Funding and will be deposited on the normal date.";
-
-                var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
-                merchantActivity.is_fast_access_funding_enabled = false;
-                MongoDBContext.UpdateMerchantDailyActivity(merchantActivity);
-            }
-
-            return response;
-        }
-
+        // Command: Unjoin
         public static string ResetAcceptedJoin(int merchantId)
         {
             var merchant = MongoDBContext.FindMerchantById(merchantId);
@@ -190,108 +188,12 @@ namespace WP.Learning.BizLogic.Shared.Merchant
             string returnMsg = "Welcome Acceptance reset";
 
             return returnMsg;
-
         }
 
-        public static string BuildConfirmFAFMessage(int merchantId, DateTime xctPostingDate)
-        {
-            string response = string.Empty;
+        #endregion
 
-            var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
-
-            if(merchantDailyActivity == null)
-            {
-                merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = xctPostingDate };
-                MongoDBContext.InsertMerchantDailyActivity(merchantDailyActivity);
-            }
-
-            if (!merchantDailyActivity.is_fast_access_funding_enabled.HasValue
-                 || !merchantDailyActivity.is_fast_access_funding_enabled.Value)
-            {
-                response = @"Funds for the Final Settlement amount will now be deposited via FastAccess tomorrow morning.";
-
-                merchantDailyActivity.is_fast_access_funding_enabled = true;
-                MongoDBContext.UpdateMerchantDailyActivity(merchantDailyActivity);
-            }
-            else
-            {
-                response = @"Funds for the Final Settlement amount are already set to be deposited via FastAccess tomorrow morning.";
-            }
-
-            return response;
-        }
-
-        public static string TestWelcomeAccept(int merchantId)
-        {
-            // get merchant metadata (MDB ??)
-            var merchant = MongoDBContext.FindMerchantById(merchantId);
-
-            var welcomeTestMsg = $"Accepted?: [{merchant.setup_options.is_accepted_welcome_agreement}]";
-
-            return welcomeTestMsg;
-        }
-
-        public static void GenerateChargebacksXcts(int merchantId)
-        {
-            DateTime xctPostingDate = DateTime.Today;
-
-            // get merchant metadata (MDB ??)
-            var merchant = MongoDBContext.FindMerchantById(merchantId);
-
-            #region Optionally Create MerchantDailyActivity record (if reqd)
-            var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
-
-            if (merchantActivity == null)
-            {
-                merchantActivity = new MerchantDailyActivityMBE()
-                {
-                    merchant_id = merchantId,
-                    xct_posting_date = xctPostingDate
-                };
-
-                MongoDBContext.InsertMerchantDailyActivity(merchantActivity);
-            }
-            #endregion
-
-            int xctCntToGenerate = new Random().Next(1, 2);
-            Random amountGenerator = new Random();
-            Random deltaDaysGenerator = new Random();
-
-            var transactions = new List<TransactionMBE>();
-
-            // create a random # of purchase xcts
-            for (int loopCtr = 1; loopCtr <= xctCntToGenerate; loopCtr++)
-            {
-                int deltaDays = -1 * deltaDaysGenerator.Next(1, 3); // creates a number between 1 and 12
-
-                DateTime xctDate = DateTime.Now.AddDays(deltaDays);
-
-                transactions.Add(new TransactionMBE()
-                {
-                    terminal_id = merchant.terminals.OrderBy(t => Guid.NewGuid()).First().terminal_id,
-                    card_data = _paymentCards.OrderBy(t => Guid.NewGuid()).First(),
-                    xct_amount = Math.Round(new decimal(amountGenerator.NextDouble() * -50.0), 2),
-                    xct_dt = xctDate,
-                    xct_id = Guid.NewGuid(),
-                    xct_type = Enums.TRANSACTION_TYPE.chargeback
-                });
-            }
-
-            // store xcts
-            MongoDBContext.UpsertMerchantDailyActivity(merchantId, xctPostingDate, transactions);
-        }
-
-        public static void FireAllTerminalsClosedEvent(int merchantId)
-        {
-            var merchant = MongoDBContext.FindMerchantById(merchantId);
-            DateTime xctPostingDate = DateTime.Today;
-
-            var xctSummaryMsg = BuildSummaryMessage(merchantId, xctPostingDate);
-
-            TwilioController.SendSMSMessage(merchant.primary_contact.phone_no, xctSummaryMsg);
-        }
-
-        public static string BuildSummaryMessage(int merchantId, DateTime xctPostingDate)
+        // Command: Summary 
+        public static string BuildOverallSummaryMessage(int merchantId, DateTime xctPostingDate)
         {
             MerchantMBE merchant = MongoDBContext.FindMerchantById(merchantId);
 
@@ -329,6 +231,7 @@ namespace WP.Learning.BizLogic.Shared.Merchant
             return sb.ToString();
         }
 
+        // Command: Sales
         public static string BuildSalesSummaryMessage(int merchantId, DateTime xctPostingDate)
         {
             StringBuilder sb = new StringBuilder();
@@ -397,6 +300,7 @@ namespace WP.Learning.BizLogic.Shared.Merchant
             return sb.ToString();
         }
 
+        // Command: Returns
         public static string BuildReturnsSummaryMessage(int merchantId, DateTime xctPostingDate)
         {
             StringBuilder sb = new StringBuilder();
@@ -432,6 +336,7 @@ namespace WP.Learning.BizLogic.Shared.Merchant
             return sb.ToString();
         }
 
+        // Command: Cback
         public static string BuildChargebackDetails(int merchantId, DateTime xctPostingDate)
         {
             StringBuilder sb = new StringBuilder();
@@ -479,6 +384,28 @@ namespace WP.Learning.BizLogic.Shared.Merchant
             return sb.ToString();
         }
 
+        // Command: Close
+        public static void FireAllTerminalsClosedEvent(int merchantId)
+        {
+            var merchant = MongoDBContext.FindMerchantById(merchantId);
+            DateTime xctPostingDate = DateTime.Today;
+
+            var xctSummaryMsg = BuildOverallSummaryMessage(merchantId, xctPostingDate);
+
+            TwilioController.SendSMSMessage(merchant.primary_contact.phone_no, xctSummaryMsg);
+        }
+
+        // Command: Settings 
+        public static string BuildConfigMessage(int merchantId)
+        {
+            var configMsg = $"To configure your daily summaries, alerts, sign-up for FastAccess Funding and adjust batch time, go to {GeneralConstants.CFG_URL}";
+
+            return configMsg;
+        }
+
+        #region === FAF Messages =========================================
+        
+        // Command: FAF
         public static string BuildFAFMessage(int merchantId, DateTime xctPostingDate)
         {
             string response = string.Empty;
@@ -505,37 +432,170 @@ namespace WP.Learning.BizLogic.Shared.Merchant
             return response;
         }
 
-        public static void SendWelcomeMessage(int merchantId)
+        // Command: Confirm
+        public static string BuildConfirmFAFMessage(int merchantId, DateTime xctPostingDate)
         {
+            string response = string.Empty;
+
+            var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
+
+            if (merchantDailyActivity == null)
+            {
+                merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = xctPostingDate };
+                MongoDBContext.InsertMerchantDailyActivity(merchantDailyActivity);
+            }
+
+            if (!merchantDailyActivity.is_fast_access_funding_enabled.HasValue
+                 || !merchantDailyActivity.is_fast_access_funding_enabled.Value)
+            {
+                response = @"Funds for the Final Settlement amount will now be deposited via FastAccess tomorrow morning.";
+
+                merchantDailyActivity.is_fast_access_funding_enabled = true;
+                MongoDBContext.UpdateMerchantDailyActivity(merchantDailyActivity);
+            }
+            else
+            {
+                response = @"Funds for the Final Settlement amount are already set to be deposited via FastAccess tomorrow morning.";
+            }
+
+            return response;
+        }
+
+        // Command: Undo
+        public static string BuildUndoFAFMessage(int merchantId, DateTime xctPostingDate)
+        {
+            string response = string.Empty;
+
+            var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
+
+            if (merchantDailyActivity == null)
+            {
+                merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = xctPostingDate };
+                MongoDBContext.InsertMerchantDailyActivity(merchantDailyActivity);
+            }
+
+            if (!merchantDailyActivity.is_fast_access_funding_enabled.HasValue
+                 || !merchantDailyActivity.is_fast_access_funding_enabled.Value)
+            {
+                response = @"Funds for this Final Settlement amount are already set Not to use Fast Access Funding.";
+            }
+            else
+            {
+                response = @"Funds for this Final Settlement amount will Not use Fast Access Funding and will be deposited on the normal date.";
+
+                var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
+                merchantActivity.is_fast_access_funding_enabled = false;
+                MongoDBContext.UpdateMerchantDailyActivity(merchantActivity);
+            }
+
+            return response;
+        }
+
+        #endregion
+
+        #region === Utility Functions ========================================
+
+        /// <summary>
+        /// Find the merchant record using a registered phone no
+        /// </summary>
+        /// <param name="phoneNo"></param>
+        /// <returns></returns>
+        public static MerchantMBE LookupMerchant(string phoneNo)
+        {
+            var merchant = MongoDBContext.FindMerchantByPrimaryContactPhoneNo(phoneNo);
+
+            return merchant;
+        }
+
+        /// <summary>
+        /// Build a Xct Summary for the specified merchant & date
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <param name="xctPostingDate"></param>
+        /// <returns></returns>
+        private static XctDailySummaryBE GetXctDailySummary(int merchantId, DateTime xctPostingDate)
+        {
+            var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
+
+            XctDailySummaryBE results = null;
+
+            if (merchantActivity != null 
+                && merchantActivity.transactions != null 
+                && merchantActivity.transactions.Count > 0)
+            {
+                results = new XctDailySummaryBE();
+
+                results.SummaryByXctType = merchantActivity.transactions
+                                    .OrderBy(x => x.xct_type)
+                                    .GroupBy(x => x.xct_type)
+                                    .Select(x => new XctTypeDailySummaryBE()
+                                    {
+                                        XctType = x.Key,
+                                        XctCount = x.Count(),
+                                        XctTotalValue = x.Sum(r => r.xct_amount)
+                                    }).ToList();
+
+            }
+
+            return results;
+        }
+
+        #endregion
+
+        #region === Generate Transactions ========================================
+        /// <summary>
+        /// Create and store a set of random transactions on the specified merchant
+        /// </summary>
+        /// <remarks>
+        /// Used to drive demos
+        /// </remarks>
+        public static void GenerateSalesXcts(int merchantId)
+        {
+            DateTime xctPostingDate = DateTime.Today;
+
+            // get merchant metadata (MDB ??)
             var merchant = MongoDBContext.FindMerchantById(merchantId);
 
-            var welcomeMsg = BuildWelcomeMessage(merchant);
-            var configMsg = BuildConfigMessage(merchant.merchant_id);
-            //TwilioController.SendSMSMessage(merchant.primary_contact.phone_no, $"{welcomeMsg}\n{configMsg}");
-            TwilioController.SendSMSMessage(merchant.primary_contact.phone_no, $"{welcomeMsg}");
+            #region Optionally Create MerchantDailyActivity record (if reqd)
+            var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
+
+            if (merchantActivity == null)
+            {
+                merchantActivity = new MerchantDailyActivityMBE()
+                {
+                    merchant_id = merchantId,
+                    xct_posting_date = xctPostingDate
+                };
+
+                MongoDBContext.InsertMerchantDailyActivity(merchantActivity);
+            }
+            #endregion
+
+            int xctCntToGenerate = new Random().Next(5, 25);
+            Random amountGenerator = new Random();
+
+            var transactions = new List<TransactionMBE>();
+
+            // create a random # of purchase xcts
+            for (int loopCtr = 1; loopCtr <= xctCntToGenerate; loopCtr++)
+            {
+                int cardPresentIndicator = new Random().Next(1, 100);
+
+                transactions.Add(new TransactionMBE()
+                {
+                    terminal_id = merchant.terminals.OrderBy(t => Guid.NewGuid()).First().terminal_id,
+                    card_data = _paymentCards.OrderBy(t => Guid.NewGuid()).First(),
+                    xct_amount = Math.Round(new decimal(amountGenerator.NextDouble() * 1000.0), 2),
+                    xct_dt = DateTime.Now,
+                    xct_id = Guid.NewGuid(),
+                    xct_type = (cardPresentIndicator % 2 == 0) ?
+                            Enums.TRANSACTION_TYPE.cp_sale : Enums.TRANSACTION_TYPE.cnp_sale
+                });
+            }
+
+            // store xcts
+            MongoDBContext.UpsertMerchantDailyActivity(merchantId, xctPostingDate, transactions);
         }
-
-        public static string BuildWelcomeMessage(MerchantMBE merchant)
-        {
-            var welcomeMsg = $"Welcome {merchant.merchant_name } to IQ Buzz\n" +
-                $"Reply YES to confirm enrollment in {GeneralConstants.APP_NAME}. Msg&Data rates may appy. Msg freq varies by acct and prefs.";
-
-            return welcomeMsg;
-        }
-
-        public static string BuildConfigMessage(int merchantId)
-        {
-            var configMsg = $"To configure your daily summaries, alerts, sign-up for FastAccess Funding and adjust batch time, go to {GeneralConstants.CFG_URL}";
-
-            return configMsg;
-        }
-
-        //public static string BuildFAFMessage(int merchantId)
-        //{
-        //    var configMsg = $"To configure go to {GeneralConstants.FAF_URL}";
-
-        //    return configMsg;
-        //}
 
         public static void GenerateRefundXcts(int merchantId)
         {
@@ -582,224 +642,258 @@ namespace WP.Learning.BizLogic.Shared.Merchant
             MongoDBContext.UpsertMerchantDailyActivity(merchantId, xctPostingDate, transactions);
         }
 
-        /// <summary>
-        /// Find the merchant record using a registered phone no
-        /// </summary>
-        /// <param name="phoneNo"></param>
-        /// <returns></returns>
-        public static MerchantMBE LookupMerchant(string phoneNo)
+        public static void GenerateChargebacksXcts(int merchantId)
         {
-            var merchant = MongoDBContext.FindMerchantByPrimaryContactPhoneNo(phoneNo);
+            DateTime xctPostingDate = DateTime.Today;
 
-            return merchant;
-        }
+            // get merchant metadata (MDB ??)
+            var merchant = MongoDBContext.FindMerchantById(merchantId);
 
-        /// <summary>
-        /// Build a Xct Summary for the specified merchant & date
-        /// </summary>
-        /// <param name="merchantId"></param>
-        /// <param name="xctPostingDate"></param>
-        /// <returns></returns>
-        public static XctDailySummaryBE GetXctDailySummary(int merchantId, DateTime xctPostingDate)
-        {
+            #region Optionally Create MerchantDailyActivity record (if reqd)
             var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
 
-            XctDailySummaryBE results = null;
-
-            if (merchantActivity != null 
-                && merchantActivity.transactions != null 
-                && merchantActivity.transactions.Count > 0)
+            if (merchantActivity == null)
             {
-                results = new XctDailySummaryBE();
+                merchantActivity = new MerchantDailyActivityMBE()
+                {
+                    merchant_id = merchantId,
+                    xct_posting_date = xctPostingDate
+                };
 
-                results.SummaryByXctType = merchantActivity.transactions
-                                    .OrderBy(x => x.xct_type)
-                                    .GroupBy(x => x.xct_type)
-                                    .Select(x => new XctTypeDailySummaryBE()
-                                    {
-                                        XctType = x.Key,
-                                        //XctType = x.Key.ToString(),
-                                        XctCount = x.Count(),
-                                        XctTotalValue = x.Sum(r => r.xct_amount)
-                                    }).ToList();
+                MongoDBContext.InsertMerchantDailyActivity(merchantActivity);
+            }
+            #endregion
 
+            int xctCntToGenerate = new Random().Next(1, 2);
+            Random amountGenerator = new Random();
+            Random deltaDaysGenerator = new Random();
 
-                var subtotals2 = from row in merchantActivity.transactions
-                                group row by row.xct_type into grp
-                                orderby grp.Key
-                                select new
-                                {
-                                    XctType = grp.Key,
-                                    XctCount = grp.Count(),
-                                    XctTotalValue = grp.Sum(r => r.xct_amount)
-                                };
+            var transactions = new List<TransactionMBE>();
 
+            // create a random # of purchase xcts
+            for (int loopCtr = 1; loopCtr <= xctCntToGenerate; loopCtr++)
+            {
+                int deltaDays = -1 * deltaDaysGenerator.Next(1, 3); // creates a number between 1 and 12
+
+                DateTime xctDate = DateTime.Now.AddDays(deltaDays);
+
+                transactions.Add(new TransactionMBE()
+                {
+                    terminal_id = merchant.terminals.OrderBy(t => Guid.NewGuid()).First().terminal_id,
+                    card_data = _paymentCards.OrderBy(t => Guid.NewGuid()).First(),
+                    xct_amount = Math.Round(new decimal(amountGenerator.NextDouble() * -50.0), 2),
+                    xct_dt = xctDate,
+                    xct_id = Guid.NewGuid(),
+                    xct_type = Enums.TRANSACTION_TYPE.chargeback
+                });
             }
 
-            return results;
+            // store xcts
+            MongoDBContext.UpsertMerchantDailyActivity(merchantId, xctPostingDate, transactions);
         }
 
-        public static void CreateAllMerchants()
+        #endregion
+
+        #region === Merchant Admin Functions ========================================
+
+        public static void CreateAllMerchants(bool isDeleteIfExists)
         {
-            for(int loopCtr = 1; loopCtr <= 8; loopCtr++)
+            Dictionary<int, MerchantMBE> merchants = BuildListOfMerchants();
+
+            foreach(KeyValuePair<int, MerchantMBE> kvp in merchants)
             {
-                CreateMerchant(loopCtr);
+                CreateMerchant(kvp.Key, isDeleteIfExists);
             }
+
+            System.Console.WriteLine();
+            System.Console.WriteLine("Hit <enter> to exit");
+            System.Console.ReadLine();
         }
 
-        public static MerchantMBE CreateMerchant(int merchantId)
+        public static void CreateMerchant(int merchantId, bool isDeleteIfExists)
         {
-            MerchantMBE merchant = null;
+            //  exists  isDeleteIfExists => Delete  Insert
+            //      F       N/A               N/A       T
+            //      T       F                 F         F
+            //      T       T                 T         T
 
-            try
+            bool isMerchantAlreadyExists = false;
+
+            MerchantMBE exisitingMerchant = MongoDBContext.FindMerchantById(merchantId);
+
+            if(exisitingMerchant != null && isDeleteIfExists)
             {
-                merchant = MongoDBContext.FindMerchantById(merchantId);
                 MongoDBContext.DeleteMerchant(merchantId);
-                merchant = null;
+                exisitingMerchant = null;
+                isMerchantAlreadyExists = true;
             }
-            catch { }
 
-            switch(merchantId)
+            if (exisitingMerchant == null) 
             {
-                case 1:
-                    merchant = new MerchantMBE()
-                    {
-                        merchant_id = merchantId,
-                        merchant_name = @"Tom's Deli",
-                        primary_contact = new ContactMBE()
-                        {
-                            first_name = @"Tom",
-                            last_name = @"Bruns",
-                            phone_no = GeneralConstants.TOMS_PHONE_NO,
-                            email_address = @"xtobr39@hotmail.com"
-                        },
-                        setup_options = new SetupOptionsMBE()
-                        {
-                            is_host_data_capture_enabled = true,
-                            auto_close_hh_mm = new TimeSpan(19, 0, 0),
-                            is_fast_funding_enabled = true,
-                            debit_card_no = @"1234567890123401"
-                        },
-                        terminals = new List<TerminalMBE>()
-                        {
-                            new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
-                            new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
-                        }
-                    };
-                    break;
+                Dictionary<int, MerchantMBE> merchants = BuildListOfMerchants();
+                var newMerchant = merchants[merchantId];
 
-                case 2:
-                    merchant = new MerchantMBE()
+                if (newMerchant != null)
+                {
+                    MongoDBContext.InsertMerchant(newMerchant);
+                    if (!isMerchantAlreadyExists)
                     {
-                        merchant_id = merchantId,
-                        merchant_name = @"Marcos Canoe Livery",
-                        primary_contact = new ContactMBE()
-                        {
-                            first_name = @"Marco",
-                            last_name = @"Fernandes",
-                            phone_no = GeneralConstants.MARCOS_PHONE_NO,
-                            email_address = @"Marco.Fernandes@worldpay.com"
-                        },
-                        setup_options = new SetupOptionsMBE()
-                        {
-                            is_host_data_capture_enabled = true,
-                            auto_close_hh_mm = new TimeSpan(19, 0, 0),
-                            is_fast_funding_enabled = true,
-                            debit_card_no = @"1234567890126702"
-                        },
-                        terminals = new List<TerminalMBE>()
-                        {
-                            new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
-                            new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
-                        }
-                    };
-                    break;
+                        System.Console.WriteLine($"Loaded Merchant: {newMerchant.merchant_id} [{newMerchant.merchant_name}]");
+                    }
+                    else
+                    {
+                        System.Console.WriteLine($"Purged & Reloaded Merchant: {newMerchant.merchant_id} [{newMerchant.merchant_name}]");
+                    }
+                }
+                else
+                {
+                    throw new ApplicationException($"MerchantID: {merchantId} is not recognized");
+                }
+            }
+            else
+            {
+                System.Console.WriteLine($"Existing Merchant: {exisitingMerchant.merchant_id} [{exisitingMerchant.merchant_name}] not overwritten");
+            }
+        }
 
-                case 3:
-                    merchant = new MerchantMBE()
-                    {
-                        merchant_id = merchantId,
-                        merchant_name = @"Dusty's Cookies",
-                        primary_contact = new ContactMBE()
+        public static Dictionary<int, MerchantMBE> BuildListOfMerchants()
+        {
+            Dictionary<int, MerchantMBE> listOfMerchants = new Dictionary<int, MerchantMBE>()
+            {
+                {
+                    1, new MerchantMBE()
                         {
-                            first_name = @"Dusty",
-                            last_name = @"Gomez",
-                            phone_no = GeneralConstants.DUSTYS_PHONE_NO,
-                            email_address = @"Dusty.Gomez@worldpay.com"
-                        },
-                        setup_options = new SetupOptionsMBE()
-                        {
-                            is_host_data_capture_enabled = true,
-                            auto_close_hh_mm = new TimeSpan(19, 0, 0),
-                            is_fast_funding_enabled = true,
-                            debit_card_no = @"1234567890125203"
-                        },
-                        terminals = new List<TerminalMBE>()
-                        {
-                            new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
-                            new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
+                            merchant_id = 1,
+                            merchant_name = @"Tom's Deli",
+                            primary_contact = new ContactMBE()
+                            {
+                                first_name = @"Tom",
+                                last_name = @"Bruns",
+                                phone_no = GeneralConstants.TOMS_PHONE_NO,
+                                email_address = @"xtobr39@hotmail.com"
+                            },
+                            setup_options = new SetupOptionsMBE()
+                            {
+                                is_host_data_capture_enabled = true,
+                                auto_close_hh_mm = new TimeSpan(19, 0, 0),
+                                is_fast_funding_enabled = true,
+                                debit_card_no = @"1234567890123401"
+                            },
+                            terminals = new List<TerminalMBE>()
+                            {
+                                new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
+                                new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
+                            }
                         }
-                    };
-                    break;
-
-                case 4:
-                    merchant = new MerchantMBE()
-                    {
-                        merchant_id = merchantId,
-                        merchant_name = @"Byrne's Bar & Grill",
-                        primary_contact = new ContactMBE()
+                },
+                {
+                    2, new MerchantMBE()
                         {
-                            first_name = @"Josh",
-                            last_name = @"Byrne",
-                            phone_no = GeneralConstants.JOSHS_PHONE_NO,
-                            email_address = @"Joshua.Byrne@worldpay.com"
-                        },
-                        setup_options = new SetupOptionsMBE()
-                        {
-                            is_host_data_capture_enabled = true,
-                            auto_close_hh_mm = new TimeSpan(19, 0, 0),
-                            is_fast_funding_enabled = true,
-                            debit_card_no = @"1234567890122704"
-                        },
-                        terminals = new List<TerminalMBE>()
-                        {
-                            new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
-                            new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
+                            merchant_id = 2,
+                            merchant_name = @"Marcos Canoe Livery",
+                            primary_contact = new ContactMBE()
+                            {
+                                first_name = @"Marco",
+                                last_name = @"Fernandes",
+                                phone_no = GeneralConstants.MARCOS_PHONE_NO,
+                                email_address = @"Marco.Fernandes@worldpay.com"
+                            },
+                            setup_options = new SetupOptionsMBE()
+                            {
+                                is_host_data_capture_enabled = true,
+                                auto_close_hh_mm = new TimeSpan(19, 0, 0),
+                                is_fast_funding_enabled = true,
+                                debit_card_no = @"1234567890126702"
+                            },
+                            terminals = new List<TerminalMBE>()
+                            {
+                                new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
+                                new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
+                            }
                         }
-                    };
-                    break;
-
-                case 5:
-                    merchant = new MerchantMBE()
-                    {
-                        merchant_id = merchantId,
-                        merchant_name = @"Dr. Boeding",
-                        primary_contact = new ContactMBE()
+                },
+                {
+                    3, new MerchantMBE()
                         {
-                            first_name = @"Alex",
-                            last_name = @"Boeding",
-                            phone_no = GeneralConstants.ALEXS_PHONE_NO,
-                            email_address = @"Axex.Boeding@worldpay.com"
-                        },
-                        setup_options = new SetupOptionsMBE()
-                        {
-                            is_host_data_capture_enabled = true,
-                            auto_close_hh_mm = new TimeSpan(19, 0, 0),
-                            is_fast_funding_enabled = true,
-                            debit_card_no = @"1234567890129905"
-                        },
-                        terminals = new List<TerminalMBE>()
-                        {
-                            new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
-                            new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
+                            merchant_id = 3,
+                            merchant_name = @"Dusty's Cookies",
+                            primary_contact = new ContactMBE()
+                            {
+                                first_name = @"Dusty",
+                                last_name = @"Gomez",
+                                phone_no = GeneralConstants.DUSTYS_PHONE_NO,
+                                email_address = @"Dusty.Gomez@worldpay.com"
+                            },
+                            setup_options = new SetupOptionsMBE()
+                            {
+                                is_host_data_capture_enabled = true,
+                                auto_close_hh_mm = new TimeSpan(19, 0, 0),
+                                is_fast_funding_enabled = true,
+                                debit_card_no = @"1234567890125203"
+                            },
+                            terminals = new List<TerminalMBE>()
+                            {
+                                new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
+                                new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
+                            }
                         }
-                    };
-                    break;
-
-                case 6:
-                    merchant = new MerchantMBE()
+                },
+                {
+                    4, new MerchantMBE()
+                        {
+                            merchant_id = 4,
+                            merchant_name = @"Byrne's Bar & Grill",
+                            primary_contact = new ContactMBE()
+                            {
+                                first_name = @"Josh",
+                                last_name = @"Byrne",
+                                phone_no = GeneralConstants.JOSHS_PHONE_NO,
+                                email_address = @"Joshua.Byrne@worldpay.com"
+                            },
+                            setup_options = new SetupOptionsMBE()
+                            {
+                                is_host_data_capture_enabled = true,
+                                auto_close_hh_mm = new TimeSpan(19, 0, 0),
+                                is_fast_funding_enabled = true,
+                                debit_card_no = @"1234567890122704"
+                            },
+                            terminals = new List<TerminalMBE>()
+                            {
+                                new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
+                                new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
+                            }
+                        }
+                },
+                {
+                    5, new MerchantMBE()
+                        {
+                            merchant_id = 5,
+                            merchant_name = @"Dr. Boeding",
+                            primary_contact = new ContactMBE()
+                            {
+                                first_name = @"Alex",
+                                last_name = @"Boeding",
+                                phone_no = GeneralConstants.ALEXS_PHONE_NO,
+                                email_address = @"Axex.Boeding@worldpay.com"
+                            },
+                            setup_options = new SetupOptionsMBE()
+                            {
+                                is_host_data_capture_enabled = true,
+                                auto_close_hh_mm = new TimeSpan(19, 0, 0),
+                                is_fast_funding_enabled = true,
+                                debit_card_no = @"1234567890129905"
+                            },
+                            terminals = new List<TerminalMBE>()
+                            {
+                                new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
+                                new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
+                            }
+                        }
+                },
+                {
+                    6, new MerchantMBE()
                     {
-                        merchant_id = merchantId,
+                        merchant_id = 6,
                         merchant_name = @"Pallavi's Robot Hobby Shop",
                         primary_contact = new ContactMBE()
                         {
@@ -820,13 +914,12 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                             new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
                             new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
                         }
-                    };
-                    break;
-
-                case 7:
-                    merchant = new MerchantMBE()
+                    }
+                },
+                {
+                    7, new MerchantMBE()
                     {
-                        merchant_id = merchantId,
+                        merchant_id = 7,
                         merchant_name = @"Joe's Java Hut",
                         primary_contact = new ContactMBE()
                         {
@@ -847,13 +940,12 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                             new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
                             new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
                         }
-                    };
-                    break;
-
-                case 8:
-                    merchant = new MerchantMBE()
+                    }
+                },
+                {
+                    8, new MerchantMBE()
                     {
-                        merchant_id = merchantId,
+                        merchant_id = 8,
                         merchant_name = @"Jake's State Farm",
                         primary_contact = new ContactMBE()
                         {
@@ -874,18 +966,54 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                             new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
                             new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
                         }
-                    };
-                    break;
+                    }
+                },
+                {
+                    9, new MerchantMBE()
+                    {
+                        merchant_id = 9,
+                        merchant_name = @"Jon's Hardware Store",
+                        primary_contact = new ContactMBE()
+                        {
+                            first_name = @"Jon",
+                            last_name = @"Pollock",
+                            phone_no = @"+16153309751",
+                            email_address = @"Jon.Pollock@worldpay.com"
+                        },
+                        setup_options = new SetupOptionsMBE()
+                        {
+                            is_host_data_capture_enabled = true,
+                            auto_close_hh_mm = new TimeSpan(19, 0, 0),
+                            is_fast_funding_enabled = true,
+                            debit_card_no = @"1234567890122208"
+                        },
+                        terminals = new List<TerminalMBE>()
+                        {
+                            new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
+                            new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
+                        }
+                    }
+                }
             };
 
-            MongoDBContext.InsertMerchant(merchant);
-
-            return merchant;
+            return listOfMerchants;
         }
 
         public static void ResetAllXctsForMerchantDate(int merchantId, DateTime xctPostingDate)
         {
             MongoDBContext.DeleteAllMerchantDailyActivity(merchantId, xctPostingDate);
         }
+
+        public static void FireClosedEventsForAllMerchants()
+        {
+            Dictionary<int, MerchantMBE> merchants = BuildListOfMerchants();
+
+            foreach (KeyValuePair<int, MerchantMBE> kvp in merchants)
+            {
+                FireAllTerminalsClosedEvent(kvp.Key);
+            }
+        }
+
+        #endregion
     }
 }

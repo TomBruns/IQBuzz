@@ -5,7 +5,7 @@ using System.Text;
 namespace WP.Learning.BizLogic.Shared.Entities
 {
     /// <summary>
-    /// This class is the necessary config info to use Trilio
+    /// This class represents the necessary config info to use Twilio
     /// </summary>
     public class SMSServiceConfigBE
     {

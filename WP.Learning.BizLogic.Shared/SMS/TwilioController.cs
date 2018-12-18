@@ -45,6 +45,11 @@ namespace WP.Learning.BizLogic.Shared.SMS
             return message.Sid;
         }
 
+        /// <summary>
+        /// Send (Push) a SMS (Text) message to a phone number using Twilio
+        /// </summary>
+        /// <param name="toPhoneNumber"></param>
+        /// <param name="messageBody"></param>
         public static void SendSMSMessage(string toPhoneNumber, string messageBody)
         {
             // ex: toPhoneNumber  => @"+15134986016"

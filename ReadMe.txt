@@ -64,3 +64,7 @@ Unhandled Exception: System.IO.IOException: Failed to bind to address http://loc
 netsh http add urlacl url=http://127.0.0.1:5000/ user=$userName
 netsh http add urlacl url=http://localhost:5000/ user=$userName
 netsh http add urlacl url=http://$env:computername`:5000/ user=$userName
+
+
+
+https://github.com/aspnet/Tooling/blob/AspNetVMs/docs/create-asp-net-vm-with-webdeploy.md

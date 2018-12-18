@@ -46,7 +46,8 @@ namespace WP.Learning.BackOffice.Console
             System.Console.ForegroundColor = defaultColor;
             System.Console.WriteLine("3.1   Load Merchant");
             System.Console.WriteLine("3.2   Load ALL Merchants");
-            System.Console.WriteLine("3.3   Send Welcome Message");
+            System.Console.WriteLine("3.3   Reload ALL Merchants");
+            System.Console.WriteLine("3.4   Send Welcome Message");
             System.Console.WriteLine("");
             System.Console.WriteLine();
             System.Console.Write("Enter # or 0 to Exit");
@@ -73,7 +74,7 @@ namespace WP.Learning.BackOffice.Console
                 case 2.2M:  // Purchases for Merchant N
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
-                    MerchantController.GenerateRandomPurchaseXcts(merchantId);
+                    MerchantController.GenerateSalesXcts(merchantId);
                     break;
 
                 case 2.3M:  // Generate refunds
@@ -103,14 +104,18 @@ namespace WP.Learning.BackOffice.Console
                 case 3.1M:  // Create Merchant
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
-                    MerchantController.CreateMerchant(merchantId);
+                    MerchantController.CreateMerchant(merchantId, false);
                     break;
 
                 case 3.2M:  // Create All Merchants
-                    MerchantController.CreateAllMerchants();
+                    MerchantController.CreateAllMerchants(false);
                     break;
 
-                case 3.3M:  // Send Welcome Message
+                case 3.3M:  // Recreate All Merchants
+                    MerchantController.CreateAllMerchants(true);
+                    break;
+
+                case 3.4M:  // Send Welcome Message
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
                     MerchantController.SendWelcomeMessage(merchantId);
