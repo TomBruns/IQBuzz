@@ -808,7 +808,8 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                                 first_name = @"Tom",
                                 last_name = @"Bruns",
                                 phone_no = GeneralConstants.TOMS_PHONE_NO,
-                                email_address = @"xtobr39@hotmail.com"
+                                email_address = @"xtobr39@hotmail.com",
+                                local_time_zone = @"EST"
                             },
                             setup_options = new SetupOptionsMBE()
                             {
@@ -834,7 +835,8 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                                 first_name = @"Marco",
                                 last_name = @"Fernandes",
                                 phone_no = GeneralConstants.MARCOS_PHONE_NO,
-                                email_address = @"Marco.Fernandes@worldpay.com"
+                                email_address = @"Marco.Fernandes@worldpay.com",
+                                local_time_zone = @"EST"
                             },
                             setup_options = new SetupOptionsMBE()
                             {
@@ -860,7 +862,8 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                                 first_name = @"Dusty",
                                 last_name = @"Gomez",
                                 phone_no = GeneralConstants.DUSTYS_PHONE_NO,
-                                email_address = @"Dusty.Gomez@worldpay.com"
+                                email_address = @"Dusty.Gomez@worldpay.com",
+                                local_time_zone = @"EST"
                             },
                             setup_options = new SetupOptionsMBE()
                             {
@@ -886,7 +889,8 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                                 first_name = @"Josh",
                                 last_name = @"Byrne",
                                 phone_no = GeneralConstants.JOSHS_PHONE_NO,
-                                email_address = @"Joshua.Byrne@worldpay.com"
+                                email_address = @"Joshua.Byrne@worldpay.com",
+                                local_time_zone = @"EST"
                             },
                             setup_options = new SetupOptionsMBE()
                             {
@@ -912,7 +916,8 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                                 first_name = @"Alex",
                                 last_name = @"Boeding",
                                 phone_no = GeneralConstants.ALEXS_PHONE_NO,
-                                email_address = @"Axex.Boeding@worldpay.com"
+                                email_address = @"Axex.Boeding@worldpay.com",
+                                local_time_zone = @"EST"
                             },
                             setup_options = new SetupOptionsMBE()
                             {
@@ -938,7 +943,8 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                             first_name = @"Pallavi",
                             last_name = @"TBD",
                             phone_no = GeneralConstants.PALLAVI_PHONE_NO,
-                            email_address = @"Pallavi.TBD@worldpay.com"
+                            email_address = @"Pallavi.TBD@worldpay.com",
+                            local_time_zone = @"EST"
                         },
                         setup_options = new SetupOptionsMBE()
                         {
@@ -964,7 +970,8 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                             first_name = @"Joe",
                             last_name = @"Pellar",
                             phone_no = GeneralConstants.JOES_PHONE_NO,
-                            email_address = @"Joe.Pellar@worldpay.com"
+                            email_address = @"Joe.Pellar@worldpay.com",
+                            local_time_zone = @"CST"
                         },
                         setup_options = new SetupOptionsMBE()
                         {
@@ -990,7 +997,8 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                             first_name = @"Jianan",
                             last_name = @"Hou",
                             phone_no = GeneralConstants.JAKES_PHONE_NO,
-                            email_address = @"Jianan.Hou@worldpay.com"
+                            email_address = @"Jianan.Hou@worldpay.com",
+                            local_time_zone = @"EST"
                         },
                         setup_options = new SetupOptionsMBE()
                         {
@@ -1016,7 +1024,8 @@ namespace WP.Learning.BizLogic.Shared.Merchant
                             first_name = @"Jon",
                             last_name = @"Pollock",
                             phone_no = @"+16153309751",
-                            email_address = @"Jon.Pollock@worldpay.com"
+                            email_address = @"Jon.Pollock@worldpay.com",
+                            local_time_zone = @"EST"
                         },
                         setup_options = new SetupOptionsMBE()
                         {

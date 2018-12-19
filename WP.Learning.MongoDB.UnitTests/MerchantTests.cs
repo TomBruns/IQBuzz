@@ -9,6 +9,7 @@ using XUnitPriorityOrderer;
 
 using WP.Learning.MongoDB;
 using WP.Learning.MongoDB.Entities;
+using WP.Learning.BizLogic.Shared.Merchant;
 
 namespace WP.Learning.MongoDB.UnitTests
 {

@@ -32,6 +32,7 @@ namespace WP.Learning.MongoDB.Entities
         public string last_name { get; set; }
         public string phone_no { get; set; }
         public string email_address { get; set; }
+        public string local_time_zone { get; set; }
     }
 
     // models the current setup options for a merchant

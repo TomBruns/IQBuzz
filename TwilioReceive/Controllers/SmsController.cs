@@ -13,6 +13,7 @@ using Twilio.TwiML.Messaging;
 using WP.Learning.BizLogic.Shared;
 using WP.Learning.BizLogic.Shared.Entities;
 using WP.Learning.BizLogic.Shared.Merchant;
+using WP.Learning.BizLogic.Shared.User;
 using WP.Learning.MongoDB.Entities;
 
 namespace TwilioReceive.Controllers
@@ -53,6 +54,8 @@ namespace TwilioReceive.Controllers
             if (requestBody == @"join")    // user requests to join
             {
                 string welcomeMsg = MerchantController.BuildWelcomeMessage(merchant);
+
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime .Now, welcomeMsg);
 
                 response.Message(welcomeMsg);
             }

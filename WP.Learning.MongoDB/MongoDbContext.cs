@@ -108,8 +108,19 @@ namespace WP.Learning.MongoDB
                         //),
                         //new CreateIndexOptions() { Unique = true });
 
-            IndexKeysDefinition<MerchantDailyActivityMBE> mDAKeys = "{ merchant_id : 1,  xct_posting_date : 1}";
+            IndexKeysDefinition<MerchantDailyActivityMBE> mDAKeys = "{ merchant_id : 1,  xct_posting_date : -1 }";
             merchantDailyActivity.Indexes.CreateOne(new CreateIndexModel<MerchantDailyActivityMBE>(mDAKeys, new CreateIndexOptions() { Unique = true }));
+            #endregion
+
+            #region UserActivityMBE
+            // will create the collection if it does not exist
+            var userActivity = db.GetCollection<UserActivityMBE>(UserActivityMBE.COLLECTION_NAME);
+
+            IndexKeysDefinition<UserActivityMBE> udaIdx1 = "{ phone_no : 1,  activity_dt : 1 }";
+            userActivity.Indexes.CreateOne(new CreateIndexModel<UserActivityMBE>(udaIdx1, new CreateIndexOptions() { Unique = false }));
+
+            IndexKeysDefinition<UserActivityMBE> udaIdx2 = "{ activity_dt : 1, phone_no : 1 }";
+            userActivity.Indexes.CreateOne(new CreateIndexModel<UserActivityMBE>(udaIdx2, new CreateIndexOptions() { Unique = false }));
 
             #endregion
         }
@@ -417,5 +428,17 @@ namespace WP.Learning.MongoDB
 
             return deleteResult;
         }
+
+        // ==== UserActivityMBE ====================================
+        public static void InsertUserActivity(UserActivityMBE userActivity)
+        {
+            var client = GetMongoClient();
+
+            var db = client.GetDatabase(DB_NAME);
+            var collection = db.GetCollection<UserActivityMBE>(UserActivityMBE.COLLECTION_NAME);
+
+            collection.InsertOne(userActivity);
+        }
+
     }
 }
