@@ -193,14 +193,17 @@ namespace WP.Learning.BizLogic.Shared.Merchant
         #endregion
 
         // Command: Summary 
-        public static string BuildOverallSummaryMessage(int merchantId, DateTime xctPostingDate)
+        public static string BuildOverallSummaryMessage(int merchantId, DateTime xctPostingDate, string currentUserTimeZone)
         {
+            DateTime asOfLocalDT = DateTime.Now;
+            DateTime asOfUserDT = DateTimeUtilities.CovertToUserLocalDT(asOfLocalDT, currentUserTimeZone);
+
             MerchantMBE merchant = MongoDBContext.FindMerchantById(merchantId);
 
             XctDailySummaryBE xctSummary = MerchantController.GetXctDailySummary(merchantId, xctPostingDate);
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"Merchant Account Summary for: {xctPostingDate:ddd MMM dd, yyyy} as of {DateTime.Now.ToString("h:mm tt")} ");
+            sb.AppendLine($"Merchant Account Summary for: {xctPostingDate:ddd MMM dd, yyyy} as of {asOfUserDT.ToString("h:mm tt")} ");
             sb.AppendLine("\n");
 
             if (xctSummary != null)
@@ -232,10 +235,13 @@ namespace WP.Learning.BizLogic.Shared.Merchant
         }
 
         // Command: Sales
-        public static string BuildSalesSummaryMessage(int merchantId, DateTime xctPostingDate)
+        public static string BuildSalesSummaryMessage(int merchantId, DateTime xctPostingDate, string currentUserTimeZone)
         {
+            DateTime asOfLocalDT = DateTime.Now;
+            DateTime asOfUserDT = DateTimeUtilities.CovertToUserLocalDT(asOfLocalDT, currentUserTimeZone);
+
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"Merchant Account Summary as of: {DateTime.Now.ToString("ddd MMM dd, yyyy h:mm tt")}");
+            sb.AppendLine($"Merchant Account Summary as of: {asOfUserDT.ToString("ddd MMM dd, yyyy h:mm tt")}");
             sb.AppendLine();
 
             var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
@@ -326,10 +332,13 @@ namespace WP.Learning.BizLogic.Shared.Merchant
         }
 
         // Command: Returns
-        public static string BuildReturnsSummaryMessage(int merchantId, DateTime xctPostingDate)
+        public static string BuildReturnsSummaryMessage(int merchantId, DateTime xctPostingDate, string currentUserTimeZone)
         {
+            DateTime asOfLocalDT = DateTime.Now;
+            DateTime asOfUserDT = DateTimeUtilities.CovertToUserLocalDT(asOfLocalDT, currentUserTimeZone);
+
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"Merchant Account Summary as of {DateTime.Now.ToString("ddd MMM dd, yyyy h:mm tt")}");
+            sb.AppendLine($"Merchant Account Summary as of {asOfUserDT.ToString("ddd MMM dd, yyyy h:mm tt")}");
             sb.AppendLine();
             sb.AppendLine($"Returns:");
 
@@ -362,10 +371,13 @@ namespace WP.Learning.BizLogic.Shared.Merchant
         }
 
         // Command: Cback
-        public static string BuildChargebackDetails(int merchantId, DateTime xctPostingDate)
+        public static string BuildChargebackDetails(int merchantId, DateTime xctPostingDate, string currentUserTimeZone)
         {
+            DateTime asOfLocalDT = DateTime.Now;
+            DateTime asOfUserDT = DateTimeUtilities.CovertToUserLocalDT(asOfLocalDT, currentUserTimeZone);
+
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"Pending Chargeback Details as of {DateTime.Now.ToString("ddd MMM dd, yyyy h:mm tt")}");
+            sb.AppendLine($"Pending Chargeback Details as of {asOfUserDT.ToString("ddd MMM dd, yyyy h:mm tt")}");
             sb.AppendLine(@"---------------------");
 
             var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
@@ -415,7 +427,7 @@ namespace WP.Learning.BizLogic.Shared.Merchant
             var merchant = MongoDBContext.FindMerchantById(merchantId);
             DateTime xctPostingDate = DateTime.Today;
 
-            var xctSummaryMsg = BuildOverallSummaryMessage(merchantId, xctPostingDate);
+            var xctSummaryMsg = BuildOverallSummaryMessage(merchantId, xctPostingDate, merchant.primary_contact.local_time_zone);
 
             TwilioController.SendSMSMessage(merchant.primary_contact.phone_no, xctSummaryMsg);
         }

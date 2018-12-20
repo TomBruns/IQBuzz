@@ -192,6 +192,25 @@ namespace WP.Learning.MongoDB
                 return requestInstance.First();
             }
         }
+        public static List<MerchantMBE> GetAllMerchants()
+        {
+            var client = GetMongoClient();
+
+            var db = client.GetDatabase(DB_NAME);
+            var collection = db.GetCollection<MerchantMBE>(MerchantMBE.COLLECTION_NAME);
+
+            // find all
+            var results = collection.Find(new BsonDocument());
+
+            if (results == null || results.CountDocuments() == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return results.ToList();
+            }
+        }
 
         public static MerchantMBE FindMerchantByPrimaryContactPhoneNo(string phone_no)
         {
@@ -440,5 +459,25 @@ namespace WP.Learning.MongoDB
             collection.InsertOne(userActivity);
         }
 
+        public static List<UserActivityMBE> GetUserActivitySummary(DateTime fromDate)
+        {
+            var client = GetMongoClient();
+
+            var db = client.GetDatabase(DB_NAME);
+            var collection = db.GetCollection<UserActivityMBE>(UserActivityMBE.COLLECTION_NAME);
+
+            var filter = Builders<UserActivityMBE>.Filter.Where(_ => _.activity_dt >= fromDate.AddDays(-5));
+
+            var queryResults = collection.Find(filter);
+
+            if (queryResults != null && queryResults.CountDocuments() > 0)
+            {
+                return queryResults.ToList();
+            }
+            else
+            {
+                return null;
+            }
+        }
     }
 }

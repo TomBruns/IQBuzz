@@ -14,6 +14,7 @@ using WP.Learning.BizLogic.Shared;
 using WP.Learning.BizLogic.Shared.Entities;
 using WP.Learning.BizLogic.Shared.Merchant;
 using WP.Learning.BizLogic.Shared.User;
+using WP.Learning.BizLogic.Shared.Utilties;
 using WP.Learning.MongoDB.Entities;
 
 namespace TwilioReceive.Controllers
@@ -55,7 +56,7 @@ namespace TwilioReceive.Controllers
             {
                 string welcomeMsg = MerchantController.BuildWelcomeMessage(merchant);
 
-                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime .Now, welcomeMsg);
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, welcomeMsg);
 
                 response.Message(welcomeMsg);
             }
@@ -63,8 +64,11 @@ namespace TwilioReceive.Controllers
             {
                 string welcomeAcceptMsg = MerchantController.StoreAcceptWelcomeMessageResponse(merchant.merchant_id, true);
                 string configMsg = MerchantController.BuildConfigMessage(merchant.merchant_id);
+                string msg = $"{welcomeAcceptMsg}\n{configMsg}";
 
-                response.Message($"{welcomeAcceptMsg}\n{configMsg}");
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, msg);
+
+                response.Message(msg);
             }
             else if (!merchant.setup_options.is_accepted_welcome_agreement)
             {
@@ -77,15 +81,19 @@ namespace TwilioReceive.Controllers
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                string salesInfo = MerchantController.BuildOverallSummaryMessage(merchant.merchant_id, xctPostingDate);
+                string summaryInfo = MerchantController.BuildOverallSummaryMessage(merchant.merchant_id, xctPostingDate, merchant.primary_contact.local_time_zone);
 
-                response.Message(salesInfo);
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, summaryInfo);
+
+                response.Message(summaryInfo);
             }
             else if (requestBody == @"sales")       // total sales for today
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                string salesInfo = MerchantController.BuildSalesSummaryMessage(merchant.merchant_id, xctPostingDate);
+                string salesInfo = MerchantController.BuildSalesSummaryMessage(merchant.merchant_id, xctPostingDate, merchant.primary_contact.local_time_zone);
+
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, salesInfo);
 
                 response.Message(salesInfo);
             }
@@ -93,15 +101,19 @@ namespace TwilioReceive.Controllers
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                string salesInfo = MerchantController.BuildChargebackDetails(merchant.merchant_id, xctPostingDate);
+                string cbackInfo = MerchantController.BuildChargebackDetails(merchant.merchant_id, xctPostingDate, merchant.primary_contact.local_time_zone);
 
-                response.Message(salesInfo);
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, cbackInfo);
+
+                response.Message(cbackInfo);
             }
             else if (requestBody == @"returns" || requestBody == @"refunds")    // returns for today
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                string refundsInfo = MerchantController.BuildReturnsSummaryMessage(merchant.merchant_id, xctPostingDate);
+                string refundsInfo = MerchantController.BuildReturnsSummaryMessage(merchant.merchant_id, xctPostingDate, merchant.primary_contact.local_time_zone);
+
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, refundsInfo);
 
                 response.Message(refundsInfo);
             }
@@ -111,6 +123,8 @@ namespace TwilioReceive.Controllers
 
                 string faf = MerchantController.BuildFAFMessage(merchant.merchant_id, xctPostingDate);
 
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, faf);
+
                 response.Message(faf);
             }
             else if (requestBody == @"confirm") // confirm faf request
@@ -118,29 +132,42 @@ namespace TwilioReceive.Controllers
                 DateTime xctPostingDate = DateTime.Today;
                 string fafMsg = MerchantController.BuildConfirmFAFMessage(merchant.merchant_id, xctPostingDate);
 
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, fafMsg);
+
                 response.Message(fafMsg);
             }
             else if (requestBody == @"undo")    // undo faf request
             {
                 DateTime xctPostingDate = DateTime.Today;
-                string fafMsg = MerchantController.BuildUndoFAFMessage(merchant.merchant_id, xctPostingDate);
-                response.Message(fafMsg);
+                string undoMsg = MerchantController.BuildUndoFAFMessage(merchant.merchant_id, xctPostingDate);
+
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, undoMsg);
+
+                response.Message(undoMsg);
             }
             else if (requestBody == @"unjoin")  // unjoin
             {
                 string unjoinMsg = MerchantController.ResetAcceptedJoin(merchant.merchant_id);
+
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, unjoinMsg);
 
                 response.Message(unjoinMsg);
             }
             else if (requestBody == @"config" || requestBody == @"settings")    // show user config
             {
                 string msg = MerchantController.BuildConfigMessage(merchant.merchant_id);
+
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, msg);
+
                 response.Message(msg);
 
             }
             else if (requestBody == @"user" || requestBody == @"whoami")    // display current user info
             {
-                string msg = $"Hi {merchant.primary_contact.first_name} !\n{merchant.merchant_name} [id: {merchant.merchant_id}]\np: {merchant.primary_contact.phone_no}";
+                string msg = $"Hi {merchant.primary_contact.first_name} !\n{merchant.merchant_name} [id: {merchant.merchant_id}]\np: {merchant.primary_contact.phone_no}\nemail: {merchant.primary_contact.email_address}\ntz: {merchant.primary_contact.local_time_zone}";
+
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, msg);
+
                 response.Message(msg);
             }
             //else if (requestBody == @"sales_alexa")
@@ -156,8 +183,11 @@ namespace TwilioReceive.Controllers
 
                 TimeZoneInfo estZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
                 DateTime lastModifiedLocalEST = TimeZoneInfo.ConvertTime(lastModifiedLocal, estZone);
+                string msg = $"{GeneralConstants.APP_NAME} Built on: [{lastModifiedLocalEST}] EST";
 
-                response.Message($"{GeneralConstants.APP_NAME} Built on: [{lastModifiedLocalEST}] EST");
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, msg);
+
+                response.Message(msg);
             }
             else if (requestBody == @"genxcts") // generate random xcts for today
             {
@@ -165,7 +195,49 @@ namespace TwilioReceive.Controllers
                 int xctGeneratedCount = MerchantController.GenerateSampleXcts(merchant.merchant_id, xctPostingDate);
 
                 string msg = $"[{xctGeneratedCount}] random xcts generated and posted to {xctPostingDate:M/dd/yyyy}";
+
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, msg);
+
                 response.Message(msg);
+            }
+            else if (requestBody == @"usage" || requestBody == @"stats")    // display usage stats
+            {
+                DateTime fromDate = DateTime.Today;
+                DateTime asOfLocalDT = DateTime.Now;
+                DateTime asOfUserDT = DateTimeUtilities.CovertToUserLocalDT(asOfLocalDT, merchant.primary_contact.local_time_zone);
+
+                List<UserDailyUsageSummaryBE> usage = UserController.GetUserActivitySummaryByDay(fromDate, merchant.primary_contact.local_time_zone);
+
+                StringBuilder msg = new StringBuilder();
+                msg.AppendLine($"{GeneralConstants.APP_NAME} usage stats: {fromDate.AddDays(-5):MMM d} to {fromDate:MMM d}");
+                msg.AppendLine($"  as of { asOfUserDT.ToString("ddd MMM dd, yyyy h:mm tt")}");
+                msg.AppendLine("----------------------------------");
+
+                var users = usage.Select(u => new { u.PhoneNo, u.IQBuzzUser.FullName }).Distinct().ToList();
+
+                foreach(var user in users)
+                {
+                    msg.Append($"{user.FullName} |");
+
+                    for (DateTime activityDate = fromDate.AddDays(-4); activityDate <= fromDate; activityDate = activityDate.AddDays(1))
+                    {
+                        var activityOnDate = usage.Where(u => u.PhoneNo == user.PhoneNo && u.ActivityDate == activityDate).FirstOrDefault();
+
+                        if(activityOnDate != null)
+                        {
+                            msg.Append($"{activityOnDate.ActionQty}|");
+                        }
+                        else
+                        {
+                            msg.Append(@"0|");
+                        }
+                    }
+                    msg.AppendLine();
+                }
+
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, msg.ToString());
+
+                response.Message(msg.ToString());
             }
             else if (requestBody == @"help"
                         || requestBody == @"help?"
@@ -187,6 +259,8 @@ namespace TwilioReceive.Controllers
                 helpMsg.AppendLine("Settings: view/update alert settings");
                 helpMsg.AppendLine("User: Account Details");
 
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, helpMsg.ToString());
+
                 response.Message(helpMsg.ToString());
             }
             else if (requestBody == @"help*")
@@ -197,13 +271,19 @@ namespace TwilioReceive.Controllers
                 helpMsg.AppendLine("------------------------------");
                 helpMsg.AppendLine("unjoin: reverse join (for testing)");
                 helpMsg.AppendLine("ver: display software build d/t");
-                helpMsg.AppendLine("genxtcs: generate random xcts");
+                helpMsg.AppendLine("genxcts: generate random xcts");
+                helpMsg.AppendLine("usage: display usage stats for last 5 days");
+
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, helpMsg.ToString());
 
                 response.Message(helpMsg.ToString());
             }
             else
             {
-                response.Message($"Sorry I do not understand [{requestBody}], text help? to see a list of the available commmands.");
+                string msg = $"Sorry I do not understand [{requestBody}], text help? to see a list of the available commmands.";
+                UserController.LogUserActivity(fromPhoneNumber, requestBody, DateTime.Now, msg);
+
+                response.Message(msg);
             }
 
             return TwiML(response);

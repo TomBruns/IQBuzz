@@ -113,7 +113,7 @@ namespace WP.Learning.BackOffice.Console
                     DateTime today = DateTime.Today.ToUniversalTime();
                     DateTime xctPostingDate = new DateTime(today.Year, today.Month, today.Day, 0, 0, 0, DateTimeKind.Utc);
 
-                    MerchantController.BuildSalesSummaryMessage(merchantId, xctPostingDate);
+                    MerchantController.BuildSalesSummaryMessage(merchantId, xctPostingDate, @"EST");
                     break;
 
                 case 4.1M:  // Create Merchant
