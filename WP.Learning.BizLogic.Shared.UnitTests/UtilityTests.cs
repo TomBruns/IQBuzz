@@ -7,7 +7,7 @@ using WP.Learning.BizLogic.Shared.Utilties;
 using Xunit;
 using XUnitPriorityOrderer;
 
-namespace WP.Learning.MongoDB.UnitTests
+namespace WP.Learning.BizLogic.Shared.UnitTests
 {
     public class UtilityTests
     {
@@ -45,6 +45,21 @@ namespace WP.Learning.MongoDB.UnitTests
             DateTime endDate = startDate.SubtractBusinessDays(5);
 
             Assert.Equal(endDate, new DateTime(2018, 12, 21));
+        }
+
+        [Fact]
+        public void TestCovertToUserLocalDT()
+        {
+            DateTime utcDT = new DateTime(2018, 12, 27, 19, 0, 0, DateTimeKind.Utc);
+
+            TimeZoneInfo localZone = TimeZoneInfo.Local;
+            var tzOffset = localZone.GetUtcOffset(utcDT);
+
+            DateTime expectedDT = utcDT.Add(tzOffset);
+
+            DateTime estDT = DateTimeUtilities.CovertToUserLocalDT(utcDT, @"EST");
+
+            Assert.Equal(estDT, expectedDT);
         }
     }
 }

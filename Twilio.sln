@@ -12,15 +12,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		ReadMe.txt = ReadMe.txt
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WP.Learning.MongoDB", "WP.Learning.MongoDB\WP.Learning.MongoDB.csproj", "{C8D1F7AC-2A5C-4DF8-B320-670737D68105}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WP.Learning.MongoDB", "WP.Learning.MongoDB\WP.Learning.MongoDB.csproj", "{C8D1F7AC-2A5C-4DF8-B320-670737D68105}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WP.Learning.MongoDB.UnitTests", "WP.Learning.MongoDB.UnitTests\WP.Learning.MongoDB.UnitTests.csproj", "{651FF049-6736-40B2-86AA-C6A467D871EC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WP.Learning.MongoDB.UnitTests", "WP.Learning.MongoDB.UnitTests\WP.Learning.MongoDB.UnitTests.csproj", "{651FF049-6736-40B2-86AA-C6A467D871EC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WP.Learning.Hangfire.Server", "WP.Learning.Hangfire.Server\WP.Learning.Hangfire.Server.csproj", "{A789C655-08D4-440D-86D6-A1872380E4EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WP.Learning.BackOffice.Console", "WP.Learning.BackOffice.Console\WP.Learning.BackOffice.Console.csproj", "{9735EEFD-85DA-4CFB-A029-496D93B70601}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WP.Learning.BackOffice.Console", "WP.Learning.BackOffice.Console\WP.Learning.BackOffice.Console.csproj", "{9735EEFD-85DA-4CFB-A029-496D93B70601}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WP.Learning.BizLogic.Shared", "WP.Learning.BizLogic.Shared\WP.Learning.BizLogic.Shared.csproj", "{52C0236C-2F68-40B5-AEFF-E8B0249A5FC5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WP.Learning.BizLogic.Shared", "WP.Learning.BizLogic.Shared\WP.Learning.BizLogic.Shared.csproj", "{52C0236C-2F68-40B5-AEFF-E8B0249A5FC5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WP.Learning.BizLogic.Shared.UnitTests", "WP.Learning.BizLogic.Shared.UnitTests\WP.Learning.BizLogic.Shared.UnitTests.csproj", "{A950FE32-0E12-4E50-ADBF-8B96E5AE3393}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -56,6 +58,10 @@ Global
 		{52C0236C-2F68-40B5-AEFF-E8B0249A5FC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{52C0236C-2F68-40B5-AEFF-E8B0249A5FC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{52C0236C-2F68-40B5-AEFF-E8B0249A5FC5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A950FE32-0E12-4E50-ADBF-8B96E5AE3393}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A950FE32-0E12-4E50-ADBF-8B96E5AE3393}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A950FE32-0E12-4E50-ADBF-8B96E5AE3393}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A950FE32-0E12-4E50-ADBF-8B96E5AE3393}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

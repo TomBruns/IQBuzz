@@ -23,8 +23,10 @@ namespace WP.Learning.BizLogic.Shared.Utilties
                     return TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
 
                 case @"GMT":
-                default:
                     return TimeZoneInfo.FindSystemTimeZoneById("Greenwich Standard Time");
+
+                default:
+                    throw new ApplicationException($"Time Zone Abbreviation [{timeZoneAbbreviation}] is NOT recognized.");
             }
         }
 

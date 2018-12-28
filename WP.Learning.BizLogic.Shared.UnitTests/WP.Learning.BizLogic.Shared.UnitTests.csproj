@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WP.Learning.MongoDB\WP.Learning.MongoDB.csproj" />
+    <ProjectReference Include="..\WP.Learning.BizLogic.Shared\WP.Learning.BizLogic.Shared.csproj" />
   </ItemGroup>
 
 </Project>

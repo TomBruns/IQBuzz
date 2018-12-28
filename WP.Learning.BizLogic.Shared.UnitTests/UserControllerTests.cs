@@ -7,11 +7,11 @@ using Xunit;
 
 using WP.Learning.BizLogic.Shared;
 using WP.Learning.BizLogic.Shared.Entities;
-using WP.Learning.BizLogic.Shared.User;
+using WP.Learning.BizLogic.Shared.Controllers;
 
-namespace WP.Learning.MongoDB.UnitTests
+namespace WP.Learning.BizLogic.Shared.UnitTests
 {
-    public class UserTests
+    public class UserControllerTests
     {
         [Fact]
         public void TestGetUserActivitySummary()

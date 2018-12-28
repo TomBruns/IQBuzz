@@ -61,6 +61,16 @@ namespace WP.Learning.BizLogic.Shared.Utilties
                 new DateTime(2019, 11, 11), // Veterans’ Day
                 new DateTime(2019, 11, 28), // Thanksgiving Day 
                 new DateTime(2019, 12, 25), // Christmas Day
+                new DateTime(2020, 1, 1), // New Year's Day
+                new DateTime(2020, 1, 20), // Martin Luther King Jr. Day
+                new DateTime(2020, 2, 17), // President’s Day
+                new DateTime(2020, 5, 25), // Memorial Day
+                //new DateTime(2020, 7, 4), // Independence Day (Sat)
+                new DateTime(2020, 9, 7), // Labor Day
+                new DateTime(2020, 10, 12), // Columbus Day
+                new DateTime(2020, 11, 11), // Veterans’ Day
+                new DateTime(2020, 11, 28), // Thanksgiving Day 
+                new DateTime(2020, 12, 25), // Christmas Day
             };
 
             return bankingHolidays;

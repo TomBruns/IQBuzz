@@ -5,21 +5,15 @@ using System.Text;
 
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
+
 using WP.Learning.BizLogic.Shared.Entities;
 using WP.Learning.MongoDB;
+using WP.Learning.MongoDB.Entities;
 
-namespace WP.Learning.BizLogic.Shared.SMS
+namespace WP.Learning.BizLogic.Shared.Controllers
 {
-    /// <summary>
-    /// This class provides some methods used to send SMS messages via Trilio
-    /// </summary>
-    public static class TwilioController
+    public static class SMSController
     {
-        // Find your Account Sid and Token at twilio.com/console
-        public static string ACCOUNT_SID_ITEM_NAME = @"TWILIO:ACCOUNT_SID";
-        public static string AUTH_TOKEN_ITEM_NAME = @"TWILIO:AUTH_TOKEN";
-        public static string PHONE_NUMBER_ITEM_NAME = @"TWILIO:PHONE_NUMBER";
-
         /// <summary>
         /// Send a Test SMS Message
         /// </summary>
@@ -29,20 +23,7 @@ namespace WP.Learning.BizLogic.Shared.SMS
         {
             // ex: toPhoneNumber  => @"+15134986016"
 
-            // Find your Account Sid and Token at twilio.com/console
-            var smsConfig = GetTwilioConfig();
-
-            // init the client
-            TwilioClient.Init(smsConfig.account_sid, smsConfig.auth_token);
-
-            // create and send a SMS message
-            var message = MessageResource.Create(
-                body: @"Hackathon Test Message.",
-                from: new Twilio.Types.PhoneNumber(smsConfig.phone_number),
-                to: new Twilio.Types.PhoneNumber(toPhoneNumber)
-            );
-
-            return message.Sid;
+            return SendSMSMessage(toPhoneNumber, $"{GeneralConstants.APP_NAME} Test Message.");
         }
 
         /// <summary>
@@ -50,7 +31,7 @@ namespace WP.Learning.BizLogic.Shared.SMS
         /// </summary>
         /// <param name="toPhoneNumber"></param>
         /// <param name="messageBody"></param>
-        public static void SendSMSMessage(string toPhoneNumber, string messageBody)
+        public static string SendSMSMessage(string toPhoneNumber, string messageBody)
         {
             // ex: toPhoneNumber  => @"+15134986016"
 
@@ -66,6 +47,8 @@ namespace WP.Learning.BizLogic.Shared.SMS
                 from: new Twilio.Types.PhoneNumber(smsConfig.phone_number),
                 to: new Twilio.Types.PhoneNumber(toPhoneNumber)
             );
+
+            return message.Sid;
         }
 
         /// <summary>
@@ -78,9 +61,9 @@ namespace WP.Learning.BizLogic.Shared.SMS
 
             SMSServiceConfigBE smsServiceConfig = new SMSServiceConfigBE()
             {
-                account_sid = allConfigData.Where(cd => cd.name == TwilioController.ACCOUNT_SID_ITEM_NAME).FirstOrDefault().value,
-                auth_token = allConfigData.Where(cd => cd.name == TwilioController.AUTH_TOKEN_ITEM_NAME).FirstOrDefault().value,
-                phone_number = allConfigData.Where(cd => cd.name == TwilioController.PHONE_NUMBER_ITEM_NAME).FirstOrDefault().value
+                account_sid = allConfigData.Where(cd => cd.name == Constants.ACCOUNT_SID_ITEM_NAME).FirstOrDefault().value,
+                auth_token = allConfigData.Where(cd => cd.name == Constants.AUTH_TOKEN_ITEM_NAME).FirstOrDefault().value,
+                phone_number = allConfigData.Where(cd => cd.name == Constants.PHONE_NUMBER_ITEM_NAME).FirstOrDefault().value
             };
 
             return smsServiceConfig;

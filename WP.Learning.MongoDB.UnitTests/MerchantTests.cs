@@ -9,7 +9,6 @@ using XUnitPriorityOrderer;
 
 using WP.Learning.MongoDB;
 using WP.Learning.MongoDB.Entities;
-using WP.Learning.BizLogic.Shared.Merchant;
 
 namespace WP.Learning.MongoDB.UnitTests
 {
@@ -31,29 +30,7 @@ namespace WP.Learning.MongoDB.UnitTests
         [Fact, Order(1)]
         public void TestInsertMerchant()
         {
-            var merchant = new MerchantMBE()
-            {
-                merchant_id = _merchantTestsGlobal.MERCHANT_ID,
-                merchant_name = @"Tom's Pet Shop",
-                primary_contact = new ContactMBE()
-                {
-                    first_name = @"Tom",
-                    last_name = @"Bruns",
-                    phone_no = _merchantTestsGlobal.PHONE_NO,
-                    email_address = @"xtobr39@hotmail.com"
-                },
-                setup_options = new SetupOptionsMBE()
-                {
-                    is_host_data_capture_enabled = true,
-                    auto_close_hh_mm = new TimeSpan(19, 0, 0),
-                    is_fast_funding_enabled = true
-                },
-                terminals = new List<TerminalMBE>()
-                {
-                    new TerminalMBE() {terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1"},
-                    new TerminalMBE() {terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2"},
-                }
-            };
+            var merchant = _merchantTestsGlobal.Merchant;
 
             MongoDBContext.InsertMerchant(merchant);
         }
@@ -61,29 +38,7 @@ namespace WP.Learning.MongoDB.UnitTests
         [Fact, Order(2)]
         public void TestInsertDupMerchantThrowsEx()
         {
-            MerchantMBE merchant = new MerchantMBE()
-            {
-                merchant_id = _merchantTestsGlobal.MERCHANT_ID,
-                merchant_name = @"Tom's Pet Shop",
-                primary_contact = new ContactMBE()
-                {
-                    first_name = @"Tom",
-                    last_name = @"Bruns",
-                    phone_no = _merchantTestsGlobal.PHONE_NO,
-                    email_address = @"xtobr39@hotmail.com"
-                },
-                setup_options = new SetupOptionsMBE()
-                {
-                    is_host_data_capture_enabled = true,
-                    auto_close_hh_mm = new TimeSpan(19, 0, 0),
-                    is_fast_funding_enabled = true
-                },
-                terminals = new List<TerminalMBE>()
-                {
-                    new TerminalMBE() {terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1"},
-                    new TerminalMBE() {terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2"},
-                }
-            };
+            MerchantMBE merchant = _merchantTestsGlobal.Merchant;
 
             // this tests our unique index
             Assert.Throws<MongoWriteException>(() => MongoDBContext.InsertMerchant(merchant));
@@ -92,7 +47,7 @@ namespace WP.Learning.MongoDB.UnitTests
         [Fact, Order(3)]
         public void TestFindMerchantById()
         {
-            int merchant_id = _merchantTestsGlobal.MERCHANT_ID;
+            int merchant_id = _merchantTestsGlobal.Merchant.merchant_id;
 
             var merchant = MongoDBContext.FindMerchantById(merchant_id);
 
@@ -101,29 +56,9 @@ namespace WP.Learning.MongoDB.UnitTests
         }
 
         [Fact, Order(4)]
-        public void TestFindMerchantByPhoneNo()
-        {
-            string phone_no = _merchantTestsGlobal.PHONE_NO;
-            int merchant_id = _merchantTestsGlobal.MERCHANT_ID;
-
-            var merchant = MongoDBContext.FindMerchantByPrimaryContactPhoneNo(phone_no);
-
-            Assert.NotNull(merchant);
-            Assert.Equal(merchant_id, merchant.merchant_id);
-        }
-
-        [Fact, Order(5)]
-        public void TestFindMerchantByUnknownPhoneNoThrowsEx()
-        {
-            string phone_no = @"+0000000000";
-
-            Assert.Throws<InvalidOperationException>(() => MongoDBContext.FindMerchantByPrimaryContactPhoneNo(phone_no));
-        }
-
-        [Fact, Order(6)]
         public void TestFindNonExistentMerchantById()
         {
-            var merchant = MongoDBContext.FindMerchantById(-1);
+            var merchant = MongoDBContext.FindMerchantById(-2);
 
             Assert.Null(merchant);
         }
@@ -136,7 +71,7 @@ namespace WP.Learning.MongoDB.UnitTests
         {
             var activity = new MerchantDailyActivityMBE()
             {
-                merchant_id = _merchantTestsGlobal.MERCHANT_ID,
+                merchant_id = _merchantTestsGlobal.Merchant.merchant_id,
                 xct_posting_date = _merchantTestsGlobal.XCT_POSTING_DATE
             };
 
@@ -148,7 +83,7 @@ namespace WP.Learning.MongoDB.UnitTests
         {
             var activity = new MerchantDailyActivityMBE()
             {
-                merchant_id = _merchantTestsGlobal.MERCHANT_ID,
+                merchant_id = _merchantTestsGlobal.Merchant.merchant_id,
                 xct_posting_date = _merchantTestsGlobal.XCT_POSTING_DATE
             };
 
@@ -159,7 +94,7 @@ namespace WP.Learning.MongoDB.UnitTests
         [Fact, Order(12)]
         public void TestFindMerchantDailyActivity()
         {
-            int merchant_id = _merchantTestsGlobal.MERCHANT_ID;
+            int merchant_id = _merchantTestsGlobal.Merchant.merchant_id;
             DateTime xct_posting_date = _merchantTestsGlobal.XCT_POSTING_DATE;
 
             var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchant_id, xct_posting_date);
@@ -173,7 +108,7 @@ namespace WP.Learning.MongoDB.UnitTests
         [Fact, Order(13)]
         public void TestUpdateMerchantDailyActivity1stTerminal()
         {
-            int merchant_id = _merchantTestsGlobal.MERCHANT_ID;
+            int merchant_id = _merchantTestsGlobal.Merchant.merchant_id;
             DateTime xct_posting_date = _merchantTestsGlobal.XCT_POSTING_DATE;
 
             var merchant = MongoDBContext.FindMerchantById(merchant_id);
@@ -193,7 +128,7 @@ namespace WP.Learning.MongoDB.UnitTests
         [Fact, Order(14)]
         public void TestUpdateMerchantDailyActivityMoreTerminals()
         {
-            int merchant_id = _merchantTestsGlobal.MERCHANT_ID;
+            int merchant_id = _merchantTestsGlobal.Merchant.merchant_id;
             DateTime xct_posting_date = _merchantTestsGlobal.XCT_POSTING_DATE;
 
             var merchant = MongoDBContext.FindMerchantById(merchant_id);
@@ -215,7 +150,7 @@ namespace WP.Learning.MongoDB.UnitTests
         [Fact, Order(15)]
         public void TestUpdateMerchantDailyActivity1stXct()
         {
-            int merchant_id = _merchantTestsGlobal.MERCHANT_ID;
+            int merchant_id = _merchantTestsGlobal.Merchant.merchant_id;
             DateTime xct_posting_date = _merchantTestsGlobal.XCT_POSTING_DATE;
 
             var merchant = MongoDBContext.FindMerchantById(merchant_id);
@@ -243,7 +178,7 @@ namespace WP.Learning.MongoDB.UnitTests
         [Fact, Order(16)]
         public void TestUpdateMerchantDailyActivityMoreXcts()
         {
-            int merchant_id = _merchantTestsGlobal.MERCHANT_ID;
+            int merchant_id = _merchantTestsGlobal.Merchant.merchant_id;
             DateTime xct_posting_date = _merchantTestsGlobal.XCT_POSTING_DATE;
 
             var merchant = MongoDBContext.FindMerchantById(merchant_id);
@@ -276,8 +211,7 @@ namespace WP.Learning.MongoDB.UnitTests
 
 public class MerchantTestsGlobal : IDisposable
 {
-    public int MERCHANT_ID { get; set; }
-    public string PHONE_NO { get; set; }
+    public MerchantMBE Merchant { get; set; }
     public DateTime XCT_POSTING_DATE { get; set; }
     public List<PaymentCardDataMBE> PAYMENT_CARDS { get; set; }
 
@@ -289,8 +223,25 @@ public class MerchantTestsGlobal : IDisposable
         var mDeleteResult = MongoDBContext.DeleteAllMerchants();
 
         // init global variables for test run
-        this.MERCHANT_ID = 1;
-        this.PHONE_NO = @"+15134986016";
+
+        this.Merchant = new MerchantMBE()
+        {
+            merchant_id = -1,
+            merchant_name = @"Test Merchant",
+            setup_options = new SetupOptionsMBE()
+            {
+                is_host_data_capture_enabled = true,
+                auto_close_hh_mm = new TimeSpan(19, 0, 0),
+                is_fast_funding_enabled = true,
+            },
+            terminals = new List<TerminalMBE>()
+                {
+                    new TerminalMBE() {terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1"},
+                    new TerminalMBE() {terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2"},
+                }
+        };
+
+
         // local time is converted to utc when store to mongo
         this.XCT_POSTING_DATE = DateTime.Today.ToUniversalTime();
 

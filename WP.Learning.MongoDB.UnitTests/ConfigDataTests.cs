@@ -9,7 +9,6 @@ using XUnitPriorityOrderer;
 
 using WP.Learning.MongoDB;
 using WP.Learning.MongoDB.Entities;
-using WP.Learning.BizLogic.Shared.SMS;
 
 namespace WP.Learning.MongoDB.UnitTests
 {
@@ -26,9 +25,9 @@ namespace WP.Learning.MongoDB.UnitTests
         [Fact, Order(1)]
         public void TestInsertSMSConfigData()
         {
-            MongoDBContext.InsertConfigData(TwilioController.ACCOUNT_SID_ITEM_NAME, _configDataTestsGlobal.SID_TOKEN);
-            MongoDBContext.InsertConfigData(TwilioController.AUTH_TOKEN_ITEM_NAME, _configDataTestsGlobal.AUTH_TOKEN);
-            MongoDBContext.InsertConfigData(TwilioController.PHONE_NUMBER_ITEM_NAME, _configDataTestsGlobal.PHONE_NO);
+            MongoDBContext.InsertConfigData(Constants.ACCOUNT_SID_ITEM_NAME, _configDataTestsGlobal.SID_TOKEN);
+            MongoDBContext.InsertConfigData(Constants.AUTH_TOKEN_ITEM_NAME, _configDataTestsGlobal.AUTH_TOKEN);
+            MongoDBContext.InsertConfigData(Constants.PHONE_NUMBER_ITEM_NAME, _configDataTestsGlobal.PHONE_NO);
         }
 
         [Fact, Order(2)]
@@ -38,9 +37,9 @@ namespace WP.Learning.MongoDB.UnitTests
             Assert.NotNull(allConfigData);
             Assert.NotEmpty(allConfigData);
 
-            Assert.Equal(allConfigData.Where(cd => cd.name == TwilioController.ACCOUNT_SID_ITEM_NAME).FirstOrDefault().value, _configDataTestsGlobal.SID_TOKEN);
-            Assert.Equal(allConfigData.Where(cd => cd.name == TwilioController.AUTH_TOKEN_ITEM_NAME).FirstOrDefault().value, _configDataTestsGlobal.AUTH_TOKEN);
-            Assert.Equal(allConfigData.Where(cd => cd.name == TwilioController.PHONE_NUMBER_ITEM_NAME).FirstOrDefault().value, _configDataTestsGlobal.PHONE_NO);
+            Assert.Equal(allConfigData.Where(cd => cd.name == Constants.ACCOUNT_SID_ITEM_NAME).FirstOrDefault().value, _configDataTestsGlobal.SID_TOKEN);
+            Assert.Equal(allConfigData.Where(cd => cd.name == Constants.AUTH_TOKEN_ITEM_NAME).FirstOrDefault().value, _configDataTestsGlobal.AUTH_TOKEN);
+            Assert.Equal(allConfigData.Where(cd => cd.name == Constants.PHONE_NUMBER_ITEM_NAME).FirstOrDefault().value, _configDataTestsGlobal.PHONE_NO);
         }
     }
 

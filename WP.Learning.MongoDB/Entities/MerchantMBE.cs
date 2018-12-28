@@ -20,20 +20,20 @@ namespace WP.Learning.MongoDB.Entities
 
         public int merchant_id { get; set; }
         public string merchant_name { get; set; }
-        public ContactMBE primary_contact { get; set; }
+        //public ContactMBE primary_contact { get; set; }
         public SetupOptionsMBE setup_options { get; set; }
         public List<TerminalMBE> terminals { get; set; }
     }
 
     // models a contact (person) for a merchant
-    public class ContactMBE
-    {
-        public string first_name { get; set; }
-        public string last_name { get; set; }
-        public string phone_no { get; set; }
-        public string email_address { get; set; }
-        public string local_time_zone { get; set; }
-    }
+    //public class ContactMBE
+    //{
+    //    public string first_name { get; set; }
+    //    public string last_name { get; set; }
+    //    public string phone_no { get; set; }
+    //    public string email_address { get; set; }
+    //    public string local_time_zone { get; set; }
+    //}
 
     // models the current setup options for a merchant
     public class SetupOptionsMBE
@@ -44,7 +44,7 @@ namespace WP.Learning.MongoDB.Entities
         // time to alert if all terminals are not closed with terminal data capture
         public TimeSpan? manual_close_alert_hh_mm { get; set; }
         public bool is_fast_funding_enabled { get; set; }
-        public bool is_accepted_welcome_agreement { get; set; }
+        //public bool is_accepted_welcome_agreement { get; set; }
 
         public string debit_card_no { get; set; }
     }

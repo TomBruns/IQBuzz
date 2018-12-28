@@ -22,51 +22,83 @@ namespace WP.Learning.MongoDB
     // http://mongodb.github.io/mongo-csharp-driver/2.7/reference/driver/crud/writing/#insert
     public static class MongoDBContext
     {
-        const bool IS_USE_LOCAL = false;
-
-        const string LOCAL_SERVER_NAME = @"localhost";
-        const int LOCAL_PORT_NUMBER = 27017;
-
-        const string CLOUD_HOST_NAME = @"wpiqbuzzmongodb.documents.azure.com";
-        const int CLOUD_PORT_NUMBER = 10255;
-        const string CLOUD_USERNAME = @"wpiqbuzzmongodb";
-        const string CLOUD_PASSWORD = @"D4zUXpJDDBhqQi8w76IDgaipo8Azqr4NcVLJOajyuJQPEDW42GAUuAQUcQUVyDvx7uz95EDO2To7huauoS3O9w==";
+        enum MONGO_DB_HOST
+        {
+            undefined = 0,
+            IS_LOCAL = 1,
+            IS_AZURE_COSMOS = 2,
+            IS_MONGO_ATLAS = 3
+        }
 
         const string DB_NAME = @"gfos2";
 
+        /// <summary>
+        /// Create a mongo client
+        /// </summary>
+        /// <returns></returns>
         internal static MongoClient GetMongoClient()
         {
             MongoClient client = null;
+            MongoClientSettings settings = null;
+            MongoIdentity identity = null;
+            MongoIdentityEvidence evidence = null;
 
-            if (IS_USE_LOCAL)
+            MONGO_DB_HOST mongoDBHost = MONGO_DB_HOST.IS_MONGO_ATLAS;
+
+            switch (mongoDBHost)
             {
-                // connect to local Mongo Instance
-                client = new MongoClient($"mongodb://{LOCAL_SERVER_NAME}:{LOCAL_PORT_NUMBER}");
-            }
-            else
-            {
-                MongoClientSettings settings = new MongoClientSettings()
-                {
-                    Server = new MongoServerAddress(CLOUD_HOST_NAME, CLOUD_PORT_NUMBER),
-                    UseSsl = true,
-                    SslSettings = new SslSettings()
+                case MONGO_DB_HOST.undefined:
+                    break;
+                case MONGO_DB_HOST.IS_LOCAL:
+                    const string LOCAL_SERVER_NAME = @"localhost";
+                    const int LOCAL_PORT_NUMBER = 27017;
+
+                    // connect to local Mongo Instance
+                    client = new MongoClient($"mongodb://{LOCAL_SERVER_NAME}:{LOCAL_PORT_NUMBER}");
+                    break;
+
+                case MONGO_DB_HOST.IS_AZURE_COSMOS:
+                    const string CLOUD_HOST_NAME = @"wpiqbuzzmongodb.documents.azure.com";
+                    const int CLOUD_PORT_NUMBER = 10255;
+                    const string CLOUD_USERNAME = @"wpiqbuzzmongodb";
+                    const string CLOUD_PASSWORD = @"D4zUXpJDDBhqQi8w76IDgaipo8Azqr4NcVLJOajyuJQPEDW42GAUuAQUcQUVyDvx7uz95EDO2To7huauoS3O9w==";
+
+                    settings = new MongoClientSettings()
                     {
-                        EnabledSslProtocols = SslProtocols.Tls12
-                    }
-                };
+                        Server = new MongoServerAddress(CLOUD_HOST_NAME, CLOUD_PORT_NUMBER),
+                        UseSsl = true,
+                        SslSettings = new SslSettings()
+                        {
+                            EnabledSslProtocols = SslProtocols.Tls12
+                        }
+                    };
 
-                MongoIdentity identity = new MongoInternalIdentity(DB_NAME, CLOUD_USERNAME);
-                MongoIdentityEvidence evidence = new PasswordEvidence(CLOUD_PASSWORD);
+                    identity = new MongoInternalIdentity(DB_NAME, CLOUD_USERNAME);
+                    evidence = new PasswordEvidence(CLOUD_PASSWORD);
 
-                settings.Credential = new MongoCredential("SCRAM-SHA-1", identity, evidence);
+                    settings.Credential = new MongoCredential("SCRAM-SHA-1", identity, evidence);
 
-                // connect to Cloud Cosmos acting like Mongo Instance
-                client = new MongoClient(settings);
+                    // connect to Cloud Cosmos acting like Mongo Instance
+                    client = new MongoClient(settings);
+                    break;
+
+                case MONGO_DB_HOST.IS_MONGO_ATLAS:
+                    const string ATLAS_HOST_NAME = @"iqbuzzcluster-ueauw.azure.mongodb.net";
+                    const int ATLAS_PORT_NUMBER = 27017;
+                    const string ATLAS_USERNAME = @"IQBuzzMongoUser";
+                    const string ATLAS_PASSWORD = @"D4zUXpJDDBhqQi8w76IDgaipo8Azqr4NcVLJOajyuJQPEDW42GAUuAQUcQUVyDvx7uz95EDO2To7huauoS3O9w==";
+
+                    client = new MongoClient($"mongodb+srv://{ATLAS_USERNAME}:{ATLAS_PASSWORD}@{ATLAS_HOST_NAME}/test?retryWrites=true");
+
+                    break;
             }
 
             return client;
         }
 
+        /// <summary>
+        /// Create the collections & indexes
+        /// </summary>
         public static void BootstrapMongoSchema()
         {
             var client = GetMongoClient();
@@ -83,6 +115,7 @@ namespace WP.Learning.MongoDB
 
             // 1=asc, -1=desc
             IndexKeysDefinition<ConfigDataItemMBE> cdeKeys = "{ name : 1 }";
+
             configData.Indexes.CreateOne(new CreateIndexModel<ConfigDataItemMBE>(cdeKeys, new CreateIndexOptions() { Unique = true }));
             #endregion
 
@@ -123,9 +156,21 @@ namespace WP.Learning.MongoDB
             userActivity.Indexes.CreateOne(new CreateIndexModel<UserActivityMBE>(udaIdx2, new CreateIndexOptions() { Unique = false }));
 
             #endregion
+
+            #region IQBuzzUserMBE
+            // will create the collection if it does not exist
+            var iqBuzzUsers = db.GetCollection<IQBuzzUserMBE>(IQBuzzUserMBE.COLLECTION_NAME);
+
+            IndexKeysDefinition<IQBuzzUserMBE> iqbUK1 = "{ user_id : 1 }";
+            iqBuzzUsers.Indexes.CreateOne(new CreateIndexModel<IQBuzzUserMBE>(iqbUK1, new CreateIndexOptions() { Unique = true }));
+
+            IndexKeysDefinition<IQBuzzUserMBE> iqbUK2 = "{ phone_no : 1 }";
+            iqBuzzUsers.Indexes.CreateOne(new CreateIndexModel<IQBuzzUserMBE>(iqbUK2, new CreateIndexOptions() { Unique = true }));
+
+            #endregion
         }
 
-        // ==== ConfigDataMBE ====================================
+        #region ==== ConfigDataMBE ====================================
         public static List<ConfigDataItemMBE> GetAllConfigData()
         {
             var client = GetMongoClient();
@@ -171,7 +216,136 @@ namespace WP.Learning.MongoDB
             return deleteResult;
         }
 
-        // ==== MerchantMBE ====================================
+        #endregion
+
+        #region ==== IQBuzzUserMBE ====================================
+
+        public static void InsertIQBuzzUser(IQBuzzUserMBE user)
+        {
+            var client = GetMongoClient();
+
+            var db = client.GetDatabase(DB_NAME);
+            var collection = db.GetCollection<IQBuzzUserMBE>(IQBuzzUserMBE.COLLECTION_NAME);
+
+            collection.InsertOne(user);
+        }
+
+        public static IQBuzzUserMBE FindIQBuzzUser(string phone_no)
+        {
+            var client = GetMongoClient();
+
+            var db = client.GetDatabase(DB_NAME);
+            var collection = db.GetCollection<IQBuzzUserMBE>(IQBuzzUserMBE.COLLECTION_NAME);
+
+            var filter = Builders<IQBuzzUserMBE>.Filter.Where(_ => _.phone_no == phone_no);
+
+            var requestInstance = collection.Find(filter);
+
+            if (requestInstance == null || requestInstance.CountDocuments() == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return requestInstance.First();
+            }
+        }
+
+        public static IQBuzzUserMBE FindIQBuzzUser(int user_id)
+        {
+            var client = GetMongoClient();
+
+            var db = client.GetDatabase(DB_NAME);
+            var collection = db.GetCollection<IQBuzzUserMBE>(IQBuzzUserMBE.COLLECTION_NAME);
+
+            var filter = Builders<IQBuzzUserMBE>.Filter.Where(_ => _.user_id == user_id);
+
+            var requestInstance = collection.Find(filter);
+
+            if (requestInstance == null || requestInstance.CountDocuments() == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return requestInstance.First();
+            }
+        }
+
+        public static List<IQBuzzUserMBE> GetAllIQBuzzUsers()
+        {
+            var client = GetMongoClient();
+
+            var db = client.GetDatabase(DB_NAME);
+            var collection = db.GetCollection<IQBuzzUserMBE>(IQBuzzUserMBE.COLLECTION_NAME);
+
+            // find all
+            var results = collection.Find(new BsonDocument());
+
+            if (results == null || results.CountDocuments() == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return results.ToList();
+            }
+        }
+
+        public static void UpdateIQBUzzUser(IQBuzzUserMBE user)
+        {
+            var client = GetMongoClient();
+
+            var db = client.GetDatabase(DB_NAME);
+            var collection = db.GetCollection<IQBuzzUserMBE>(IQBuzzUserMBE.COLLECTION_NAME);
+
+            var filter = new BsonDocument("_id", user.ID);
+            collection.ReplaceOne(filter, user);
+        }
+
+        public static DeleteResult DeleteIQBuzzUser(string phone_no)
+        {
+            var client = GetMongoClient();
+
+            var db = client.GetDatabase(DB_NAME);
+
+            var collection = db.GetCollection<IQBuzzUserMBE>(IQBuzzUserMBE.COLLECTION_NAME);
+
+            var deleteResult = collection.DeleteOne(_ => _.phone_no == phone_no);
+
+            return deleteResult;
+        }
+
+        public static DeleteResult DeleteIQBuzzUser(int userId)
+        {
+            var client = GetMongoClient();
+
+            var db = client.GetDatabase(DB_NAME);
+
+            var collection = db.GetCollection<IQBuzzUserMBE>(IQBuzzUserMBE.COLLECTION_NAME);
+
+            var deleteResult = collection.DeleteOne(_ => _.user_id == userId);
+
+            return deleteResult;
+        }
+
+        public static DeleteResult DeleteAllIQBUzzUsers()
+        {
+            var client = GetMongoClient();
+
+            var db = client.GetDatabase(DB_NAME);
+
+            var collection = db.GetCollection<IQBuzzUserMBE>(IQBuzzUserMBE.COLLECTION_NAME);
+
+            var filter = new BsonDocument();
+            var deleteResult = collection.DeleteMany(filter);
+
+            return deleteResult;
+        }
+
+        #endregion
+
+        #region ==== MerchantMBE ====================================
         public static MerchantMBE FindMerchantById(int merchant_id)
         {
             var client = GetMongoClient();
@@ -192,6 +366,7 @@ namespace WP.Learning.MongoDB
                 return requestInstance.First();
             }
         }
+
         public static List<MerchantMBE> GetAllMerchants()
         {
             var client = GetMongoClient();
@@ -214,23 +389,23 @@ namespace WP.Learning.MongoDB
 
         public static MerchantMBE FindMerchantByPrimaryContactPhoneNo(string phone_no)
         {
-            var client = GetMongoClient();
+            //var client = GetMongoClient();
 
-            var db = client.GetDatabase(DB_NAME);
-            var collection = db.GetCollection<MerchantMBE>(MerchantMBE.COLLECTION_NAME);
+            //var db = client.GetDatabase(DB_NAME);
+            //var collection = db.GetCollection<MerchantMBE>(MerchantMBE.COLLECTION_NAME);
 
-            var filter = Builders<MerchantMBE>.Filter.Where(_ => _.primary_contact.phone_no == phone_no);
+            //var filter = Builders<MerchantMBE>.Filter.Where(_ => _.primary_contact.phone_no == phone_no);
 
-            var requestInstance = collection.Find(filter);
+            //var requestInstance = collection.Find(filter);
 
-            if (requestInstance == null || requestInstance.CountDocuments() == 0)
-            {
+            //if (requestInstance == null || requestInstance.CountDocuments() == 0)
+            //{
                 return null;
-            }
-            else
-            {
-                return requestInstance.First();
-            }
+            //}
+            //else
+            //{
+            //    return requestInstance.First();
+            //}
         }
 
         public static void InsertMerchant(MerchantMBE merchant)
@@ -280,7 +455,9 @@ namespace WP.Learning.MongoDB
             return deleteResult;
         }
 
-        // ==== MerchantDailyActivityMBE ========================
+        #endregion
+
+        #region ==== MerchantDailyActivityMBE ========================
         public static MerchantDailyActivityMBE FindMerchantDailyActivity(int merchant_id, DateTime xct_posting_date)
         {
             var client = GetMongoClient();
@@ -448,7 +625,9 @@ namespace WP.Learning.MongoDB
             return deleteResult;
         }
 
-        // ==== UserActivityMBE ====================================
+        #endregion
+
+        #region ==== UserActivityMBE ====================================
         public static void InsertUserActivity(UserActivityMBE userActivity)
         {
             var client = GetMongoClient();
@@ -479,5 +658,7 @@ namespace WP.Learning.MongoDB
                 return null;
             }
         }
+
+        #endregion
     }
 }

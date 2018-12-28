@@ -10,7 +10,11 @@ namespace WP.Learning.BizLogic.Shared.Entities
     /// </summary>
     public class XctDailySummaryBE
     {
-        public List<XctTypeDailySummaryBE> SummaryByXctType { get; set; }
+        public List<XctTypeDailySummaryBE> SalesSummary { get; set; }
+
+        public List<XctTypeDailySummaryBE> ReturnsSummary { get; set; }
+
+        public List<XctTypeDailySummaryBE> ChargebacksSummary { get; set; }
     }
 
     public class XctTypeDailySummaryBE
