@@ -203,7 +203,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
 
             if (merchantsActivity != null)
             {
-                var merchantActivity = merchantsActivity[0];
+                var merchantActivity = merchantsActivity.First().Value;
 
                 // ----------------------------------
                 // Card Present (In-Store) Xcts
