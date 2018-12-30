@@ -458,6 +458,23 @@ namespace WP.Learning.MongoDB
         #endregion
 
         #region ==== MerchantDailyActivityMBE ========================
+        public static Dictionary<int, MerchantDailyActivityMBE> FindMerchantsDailyActivity(List<int> merchant_ids, DateTime xct_posting_date)
+        {
+            Dictionary<int, MerchantDailyActivityMBE> merchantsDailyActivity = new Dictionary<int, MerchantDailyActivityMBE>();
+
+            foreach (int merchantId in merchant_ids)
+            {
+                var merchantDailyActivity = FindMerchantDailyActivity(merchantId, xct_posting_date);
+
+                if (merchantDailyActivity != null)
+                {
+                    merchantsDailyActivity.Add(merchantId, merchantDailyActivity);
+                }
+            }
+
+            return merchantsDailyActivity;
+        }
+
         public static MerchantDailyActivityMBE FindMerchantDailyActivity(int merchant_id, DateTime xct_posting_date)
         {
             var client = GetMongoClient();

@@ -116,10 +116,12 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         }
 
         // Command: Summary 
-        public static string BuildOverallSummaryMessage(int merchantId, DateTime xctPostingDate, string currentUserTimeZone)
+        public static string BuildOverallSummaryMessage(List<int> merchantIds, DateTime xctPostingDate, string currentUserTimeZone)
         {
             DateTime asOfLocalDT = DateTime.Now;
             DateTime asOfUserDT = DateTimeUtilities.CovertToUserLocalDT(asOfLocalDT, currentUserTimeZone);
+
+            int merchantId = merchantIds[0];
 
             MerchantMBE merchant = MongoDBContext.FindMerchantById(merchantId);
 
@@ -188,7 +190,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         }
 
         // Command: Sales
-        public static string BuildSalesSummaryMessage(int merchantId, DateTime xctPostingDate, string currentUserTimeZone)
+        public static string BuildSalesSummaryMessage(List<int> merchantIds, DateTime xctPostingDate, string currentUserTimeZone)
         {
             DateTime asOfLocalDT = DateTime.Now;
             DateTime asOfUserDT = DateTimeUtilities.CovertToUserLocalDT(asOfLocalDT, currentUserTimeZone);
@@ -197,10 +199,12 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             sb.AppendLine($"Merchant Account Summary as of: {asOfUserDT.ToString("ddd MMM dd, yyyy h:mm tt")}");
             sb.AppendLine();
 
-            var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
+            var merchantsActivity = MongoDBContext.FindMerchantsDailyActivity(merchantIds, xctPostingDate);
 
-            if (merchantActivity != null && merchantActivity.transactions != null && merchantActivity.transactions.Count() > 0)
+            if (merchantsActivity != null)
             {
+                var merchantActivity = merchantsActivity[0];
+
                 // ----------------------------------
                 // Card Present (In-Store) Xcts
                 // ----------------------------------
@@ -285,10 +289,12 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         }
 
         // Command: Returns
-        public static string BuildReturnsSummaryMessage(int merchantId, DateTime xctPostingDate, string currentUserTimeZone)
+        public static string BuildReturnsSummaryMessage(List<int> merchantIds, DateTime xctPostingDate, string currentUserTimeZone)
         {
             DateTime asOfLocalDT = DateTime.Now;
             DateTime asOfUserDT = DateTimeUtilities.CovertToUserLocalDT(asOfLocalDT, currentUserTimeZone);
+
+            int merchantId = merchantIds[0];
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Merchant Account Summary as of {asOfUserDT.ToString("ddd MMM dd, yyyy h:mm tt")}");
@@ -324,10 +330,12 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         }
 
         // Command: Cback
-        public static string BuildChargebackDetails(int merchantId, DateTime xctPostingDate, string currentUserTimeZone)
+        public static string BuildChargebackDetails(List<int> merchantIds, DateTime xctPostingDate, string currentUserTimeZone)
         {
             DateTime asOfLocalDT = DateTime.Now;
             DateTime asOfUserDT = DateTimeUtilities.CovertToUserLocalDT(asOfLocalDT, currentUserTimeZone);
+
+            var merchantId = merchantIds[0];
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Pending Chargeback Details as of {asOfUserDT.ToString("ddd MMM dd, yyyy h:mm tt")}");

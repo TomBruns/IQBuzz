@@ -59,25 +59,25 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                responseMsg = MerchantController.BuildOverallSummaryMessage(user.merchant_ids[0], xctPostingDate, user.local_time_zone);
+                responseMsg = MerchantController.BuildOverallSummaryMessage(user.merchant_ids, xctPostingDate, user.local_time_zone);
             }
             else if (requestBody == @"sales")       // total sales for today
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                responseMsg = MerchantController.BuildSalesSummaryMessage(user.merchant_ids[0], xctPostingDate, user.local_time_zone);
+                responseMsg = MerchantController.BuildSalesSummaryMessage(user.merchant_ids, xctPostingDate, user.local_time_zone);
             }
             else if (requestBody == @"cback" || requestBody == @"chargeback" || requestBody == @"chargebacks")  // chargebacks for today
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                responseMsg = MerchantController.BuildChargebackDetails(user.merchant_ids[0], xctPostingDate, user.local_time_zone);
+                responseMsg = MerchantController.BuildChargebackDetails(user.merchant_ids, xctPostingDate, user.local_time_zone);
             }
             else if (requestBody == @"returns" || requestBody == @"refunds")    // returns for today
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                responseMsg = MerchantController.BuildReturnsSummaryMessage(user.merchant_ids[0], xctPostingDate, user.local_time_zone);
+                responseMsg = MerchantController.BuildReturnsSummaryMessage(user.merchant_ids, xctPostingDate, user.local_time_zone);
             }
             else if (requestBody == @"faf")     // fast access funding
             {
@@ -158,16 +158,20 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 msg.AppendLine($"  (as of { asOfUserDT.ToString("ddd MMM dd, yyyy h:mm tt")})");
                 msg.AppendLine("----------------------------------");
 
-                var users = usage.OrderBy(u => u.IQBuzzUser.user_id).ToList();
+                // get a list of unique user entities from the collection
+                var uniqueUsers = usage.DistinctBy(u => u.IQBuzzUser.user_id).Select(u => u.IQBuzzUser).ToList();
                     
-                foreach (var userInLoop in users)
+                // build a summary line for each unique user
+                foreach (var uniqueUser in uniqueUsers)
                 {
-                    msg.Append($"[{userInLoop.IQBuzzUser.user_id}] {userInLoop.IQBuzzUser.FullName} |");
+                    msg.Append($"[{uniqueUser.user_id}] {uniqueUser.FullName} |");
 
+                    // loop over the date range
                     for (DateTime activityDate = fromDate.AddDays(-4); activityDate <= fromDate; activityDate = activityDate.AddDays(1))
                     {
-                        var activityOnDate = usage.Where(u => u.PhoneNo == userInLoop.PhoneNo && u.ActivityDate == activityDate).FirstOrDefault();
+                        var activityOnDate = usage.Where(u => u.PhoneNo == uniqueUser.phone_no && u.ActivityDate == activityDate).FirstOrDefault();
 
+                        // add a field for each day
                         if (activityOnDate != null)
                         {
                             msg.Append($"{activityOnDate.ActionQty}|");
