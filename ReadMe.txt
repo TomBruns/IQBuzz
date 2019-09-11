@@ -68,3 +68,25 @@ netsh http add urlacl url=http://$env:computername`:5000/ user=$userName
 
 
 https://github.com/aspnet/Tooling/blob/AspNetVMs/docs/create-asp-net-vm-with-webdeploy.md
+
+============
+Azure Get possible outbound addresses
+============
+
+TwilioReceive20181217080037
+
+az webapp show --resource-group Default-MachineLearning-SouthCentralUS --name TwilioReceive20181217080037 --query outboundIpAddresses --output tsv
+
+52.170.46.174,
+52.170.41.18,
+13.72.72.252,
+52.170.41.233,
+52.186.122.173
+
+============
+App COnfig
+============
+
+www.twilio.com				WP Hackathon-v1			(812) 594-4088
+www.azure.com				App Service				https://twilioreceive20181217080037.azurewebsites.net/sms
+https://cloud.mongodb.com	Atlas DB				IQBuzzCluster	mongodb+srv://IQBuzzMongoUser:@iqbuzzcluster-ueauw.azure.mongodb.net/admin

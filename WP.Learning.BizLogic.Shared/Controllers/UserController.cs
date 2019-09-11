@@ -180,6 +180,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                    + "Msg&Data rates may appy. Msg freq varies by acct and prefs.";
             }
 
+            welcomeMsg += @"Hint: You can always text HELP? or ??? to see a list of commands.";
+
             return welcomeMsg;
         }
 
@@ -189,7 +191,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         /// <param name="userId"></param>
         public static void SendWelcomeMessage(int userId)
         {
-            var user = (IQBuzzUserBE)MongoDBContext.FindIQBuzzUser(userId);
+            var user = (IQBuzzUserBE)MongoDBContext.FindIQBuzzUser(userId).As<IQBuzzUserBE>();
 
             var welcomeMsg = BuildWelcomeMessage(user);
 

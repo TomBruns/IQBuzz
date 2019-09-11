@@ -22,6 +22,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         {
             string responseMsg = string.Empty;
 
+            // 
+
             // lookup the merchant using the incoming phone number
             IQBuzzUserBE user = UserController.FindIQBuzzUser(fromPhoneNo);
 
