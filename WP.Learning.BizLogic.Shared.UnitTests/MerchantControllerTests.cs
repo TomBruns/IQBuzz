@@ -23,7 +23,7 @@ namespace WP.Learning.BizLogic.Shared.UnitTests
         [Fact, Order(1)]
         public void TestBuildSalesSummaryMessage()
         {
-            MerchantController.BuildSalesSummaryMessage(1, DateTime.Today, @"EST");
+            MerchantController.BuildSalesSummaryMessage(new List<int> { 1 }, DateTime.Today, @"EST");
         }
 
         //[Fact, Order(4)]

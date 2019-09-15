@@ -9,6 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TwilioReceive", "TwilioRece
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5E65AC8F-314B-4D30-B76A-0B5D94540D9D}"
 	ProjectSection(SolutionItems) = preProject
+		global.json = global.json
 		ReadMe.txt = ReadMe.txt
 	EndProjectSection
 EndProject
@@ -22,7 +23,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WP.Learning.BackOffice.Cons
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WP.Learning.BizLogic.Shared", "WP.Learning.BizLogic.Shared\WP.Learning.BizLogic.Shared.csproj", "{52C0236C-2F68-40B5-AEFF-E8B0249A5FC5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WP.Learning.BizLogic.Shared.UnitTests", "WP.Learning.BizLogic.Shared.UnitTests\WP.Learning.BizLogic.Shared.UnitTests.csproj", "{A950FE32-0E12-4E50-ADBF-8B96E5AE3393}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WP.Learning.BizLogic.Shared.UnitTests", "WP.Learning.BizLogic.Shared.UnitTests\WP.Learning.BizLogic.Shared.UnitTests.csproj", "{A950FE32-0E12-4E50-ADBF-8B96E5AE3393}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

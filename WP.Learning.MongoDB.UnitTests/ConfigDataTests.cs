@@ -55,9 +55,9 @@ namespace WP.Learning.MongoDB.UnitTests
             var cdDeleteResult = MongoDBContext.DeleteAllConfigData();
 
             // init global variables for test run
-            this.SID_TOKEN = @"AC8a0322c81593dc526baacfbfe6a0220a";
-            this.AUTH_TOKEN = @"8594f8e7b2b3b47275eb15b6f7fffe1e";
-            this.PHONE_NO = @"+18125944088";
+            this.SID_TOKEN = @"AC33b75be219502815b2bd3f4cdbfc23bb";
+            this.AUTH_TOKEN = @"33717d3aae306c09eb78b3008bb4f66f";
+            this.PHONE_NO = @"+15138541944";
         }
 
         public void Dispose()
