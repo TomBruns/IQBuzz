@@ -22,6 +22,8 @@ namespace WP.Learning.MongoDB.Entities
         public string local_time_zone { get; set; }
         public bool has_accepted_welcome_agreement { get; set; }
 
+        public string language_code { get; set; }
+
         public List<int> merchant_ids { get; set; }
 
         // generic code to support "upcasting" to derived classes
@@ -42,4 +44,6 @@ namespace WP.Learning.MongoDB.Entities
             return (T)instance;
         }
     }
+
+    //public
 }

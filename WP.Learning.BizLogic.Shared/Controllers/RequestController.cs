@@ -20,7 +20,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
     {
         public static List<string> ProcessIncommingText(string fromPhoneNo, string requestBody)
         {
-            List<string> responseMsg = new List<string>();
+            List<string> responseMsgs = new List<string>();
 
             // lookup the merchant using the incoming phone number
             IQBuzzUserBE user = UserController.FindIQBuzzUser(fromPhoneNo);
@@ -32,7 +32,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
 
                 UserController.LogUserActivity(fromPhoneNo, requestBody, DateTime.Now, new List<string>() { msg });
 
-                responseMsg.Add(msg);
+                responseMsgs.Add(msg);
             }
 
             // ===================================================
@@ -40,24 +40,24 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             // ===================================================
             if (requestBody == @"join")    // user requests to join
             {
-                responseMsg.Add(UserController.BuildWelcomeMessage(user));
+                responseMsgs.Add(UserController.BuildWelcomeMessage(user));
             }
             else if (requestBody == @"yes")     // welcome accept
             {
                 string welcomeAcceptMsg = UserController.StoreAcceptWelcomeMessageResponse(user.user_id, true);
-                responseMsg.Add(welcomeAcceptMsg);
+                responseMsgs.Add(welcomeAcceptMsg);
                 //string configMsg = UserController.BuildConfigMessage(user.user_id);
                 //responseMsg.Add($"{welcomeAcceptMsg}\n{configMsg}");
 
                 //string addContactMsg = UserController.BuildSaveContactMessage(user.user_id);
-                responseMsg.Add(BuildHelpMessage());
+                responseMsgs.Add(BuildHelpMessage());
 
                 string helpReminderMsg = $"\nTo see this list again at any time, text HELP? or ??? back to me.";
-                responseMsg.Add(helpReminderMsg);
+                responseMsgs.Add(helpReminderMsg);
             }
             else if (!user.has_accepted_welcome_agreement)
             {
-                responseMsg.Add($"You must accept the Terms&Conditions before using {GeneralConstants.APP_NAME}, Text JOIN to do that.");
+                responseMsgs.Add($"You must accept the Terms&Conditions before using {GeneralConstants.APP_NAME}, Text JOIN to do that.");
             }
             // =====================================================
             // Everything below here requires you to have accepted the T&C first
@@ -66,64 +66,70 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                responseMsg.Add(MerchantController.BuildOverallSummaryMessage(user.merchant_ids, xctPostingDate, user.local_time_zone));
+                responseMsgs.Add(MerchantController.BuildOverallSummaryMessage(user.merchant_ids, xctPostingDate, user.local_time_zone));
             }
             else if (requestBody == @"sales")       // total sales for today
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                responseMsg.Add(MerchantController.BuildSalesSummaryMessage(user.merchant_ids, xctPostingDate, user.local_time_zone));
+                responseMsgs.Add(MerchantController.BuildSalesSummaryMessage(user.merchant_ids, xctPostingDate, user.local_time_zone));
             }
             else if (requestBody == @"cback" || requestBody == @"chargeback" || requestBody == @"chargebacks")  // chargebacks for today
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                responseMsg.Add(MerchantController.BuildChargebackDetails(user.merchant_ids, xctPostingDate, user.local_time_zone));
+                responseMsgs.Add(MerchantController.BuildChargebackDetails(user.merchant_ids, xctPostingDate, user.local_time_zone));
             }
             else if (requestBody == @"returns" || requestBody == @"refunds")    // returns for today
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                responseMsg.Add(MerchantController.BuildReturnsSummaryMessage(user.merchant_ids, xctPostingDate, user.local_time_zone));
+                responseMsgs.Add(MerchantController.BuildReturnsSummaryMessage(user.merchant_ids, xctPostingDate, user.local_time_zone));
             }
             else if (requestBody == @"faf")     // fast access funding
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                responseMsg.Add(MerchantController.BuildFAFMessage(user.merchant_ids[0], xctPostingDate));
+                responseMsgs.Add(MerchantController.BuildFAFMessage(user.merchant_ids[0], xctPostingDate));
             }
             else if (requestBody == @"confirm") // confirm faf request
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                responseMsg.Add(MerchantController.BuildConfirmFAFMessage(user.merchant_ids[0], xctPostingDate));
+                responseMsgs.Add(MerchantController.BuildConfirmFAFMessage(user.merchant_ids[0], xctPostingDate));
             }
             else if (requestBody == @"undo")    // undo faf request
             {
                 DateTime xctPostingDate = DateTime.Today;
 
-                responseMsg.Add(MerchantController.BuildUndoFAFMessage(user.merchant_ids[0], xctPostingDate));
+                responseMsgs.Add(MerchantController.BuildUndoFAFMessage(user.merchant_ids[0], xctPostingDate));
             }
             else if (requestBody == @"unjoin")  // unjoin
             {
-                responseMsg.Add(UserController.ResetAcceptedJoin(user.user_id));
+                responseMsgs.Add(UserController.ResetAcceptedJoin(user.user_id));
             }
             else if (requestBody == @"config" || requestBody == @"settings")    // show user config
             {
-                responseMsg.Add(UserController.BuildConfigMessage(user.user_id));
+                responseMsgs.Add(UserController.BuildConfigMessage(user.user_id));
             }
             else if (requestBody == @"user" || requestBody == @"whoami")    // display current user info
             {
                 StringBuilder sb = new StringBuilder();
                 sb.AppendLine($"Hi {user.first_name} {user.last_name} | ID: {user.user_id} | Accepted: {user.has_accepted_welcome_agreement}");
-                sb.AppendLine($"PhoneNo: {user.phone_no} tz: {user.local_time_zone}");
+                sb.AppendLine($"PhoneNo: {user.phone_no} tz: {user.local_time_zone} lang: {user.language_code}");
                 sb.AppendLine($"--------------------------------------");
                 foreach (var merchant in user.Merchants)
                 {
                     sb.AppendLine($"[{merchant.merchant_id}] {merchant.merchant_name}");
                 }
 
-                responseMsg.Add(sb.ToString());
+                responseMsgs.Add(sb.ToString());
+            }
+            else if (requestBody.StartsWith(@"lang"))    // set user language
+            {
+                string[] msgParts = requestBody.Split('-');
+
+                responseMsgs.Add(UserController.SetUserLanguage(user.user_id, msgParts[1]));
             }
             else if (requestBody == @"ver") // display software build info
             {
@@ -135,7 +141,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 TimeZoneInfo estZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
                 DateTime lastModifiedLocalEST = TimeZoneInfo.ConvertTime(lastModifiedLocal, estZone);
 
-                responseMsg.Add($"Running {GeneralConstants.APP_NAME} built on: [{lastModifiedLocalEST} EST]");
+                responseMsgs.Add($"Running {GeneralConstants.APP_NAME} built on: [{lastModifiedLocalEST} EST]");
             }
             else if (requestBody == @"genxcts") // generate random xcts for today
             {
@@ -150,7 +156,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                     xctGeneratedCount += MerchantController.GenerateSampleXcts(merchant.merchant_id, xctPostingDate);
                 }
 
-                responseMsg.Add($"[{xctGeneratedCount}] random xcts generated across [{merchantsCount}] merchants and posted to {xctPostingDate:M/dd/yyyy}");
+                responseMsgs.Add($"[{xctGeneratedCount}] random xcts generated across [{merchantsCount}] merchants and posted to {xctPostingDate:M/dd/yyyy}");
             }
             else if (requestBody == @"usage" || requestBody == @"stats")    // display usage stats
             {
@@ -191,7 +197,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                     msg.AppendLine();
                 }
 
-                responseMsg.Add(msg.ToString());
+                responseMsgs.Add(msg.ToString());
             }
             else if (requestBody == @"help"
                         || requestBody == @"help?"
@@ -213,7 +219,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 //helpMsg.AppendLine("Settings: view/update alert settings");
                 //helpMsg.AppendLine("User: Account Details");
 
-                responseMsg.Add(BuildHelpMessage());
+                responseMsgs.Add(BuildHelpMessage());
             }
             else if (requestBody == @"help+" || requestBody == @"help*")
             {
@@ -225,17 +231,23 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 helpMsg.AppendLine("ver: display software build d/t");
                 helpMsg.AppendLine("genxcts: generate random xcts");
                 helpMsg.AppendLine("usage: display usage stats for last 5 days");
+                helpMsg.AppendLine("lang: set language code");
 
-                responseMsg.Add(helpMsg.ToString());
+                responseMsgs.Add(helpMsg.ToString());
             }
             else
             {
-                responseMsg.Add($"Sorry I do not understand [{requestBody}], text help? to see a list of the available commmands.");
+                responseMsgs.Add($"Sorry I do not understand [{requestBody}], text help? to see a list of the available commmands.");
             }
 
-            UserController.LogUserActivity(fromPhoneNo, requestBody, DateTime.Now, responseMsg);
+            UserController.LogUserActivity(fromPhoneNo, requestBody, DateTime.Now, responseMsgs);
 
-            return responseMsg;
+            if (user.language_code != LanguageType.ENGLISH.ToString())
+            {
+                responseMsgs = TranslationController.Translate(responseMsgs, user.language_code);
+            }
+
+            return responseMsgs;
         }
 
         private static string BuildHelpMessage()

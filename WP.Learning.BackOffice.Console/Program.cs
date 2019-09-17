@@ -255,6 +255,13 @@ namespace WP.Learning.BackOffice.Console
 
                 #endregion
 
+                case 99.0M: // test translate
+                    string translation = TranslationController.Translate("Hello World.", "ru");
+                    System.Console.OutputEncoding = System.Text.Encoding.Unicode;
+                    System.Console.Write(translation);
+                    System.Console.ReadLine();
+                    break;
+
                 default:
                     break;
             }

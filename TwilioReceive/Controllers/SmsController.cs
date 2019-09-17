@@ -25,32 +25,29 @@ namespace TwilioReceive.Controllers
             // pull out the command that was texted
             string requestBody = incomingMessage.Body.ToLower().Trim();
 
-            List<string> responseText = new List<string>();
+            List<string> responsesText = new List<string>();
 
             // ===================================================
             // Logic to recognize all of the supported commands
             // ===================================================
             if (requestBody == @"ping")   
             {
-                responseText.Add(@"icmp echo");
+                responsesText.Add(@"icmp echo");
             }
             else
             {
                 // process the request
-                responseText = RequestController.ProcessIncommingText(fromPhoneNumber, requestBody);
+                responsesText = RequestController.ProcessIncommingText(fromPhoneNumber, requestBody);
             }
 
             // build the response
             var response = new MessagingResponse();
             
             //response.Message(responseText);
-            foreach (string msgPart in responseText)
+            foreach (string responseText in responsesText)
             {
-                response.Append(new Message(msgPart));
+                response.Append(new Message(responseText));
             }
-
-            //string allReponseText = string.Join("", responseText);
-            //response.Message(allReponseText);
 
             // return the response
             return TwiML(response);

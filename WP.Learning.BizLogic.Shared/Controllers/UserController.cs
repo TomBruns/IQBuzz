@@ -157,6 +157,19 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             return userDailyUsageSummary;
         }
 
+        internal static string SetUserLanguage(int user_id, string languageCode)
+        {
+            // see if the user is already on file
+            IQBuzzUserMBE exisitingUser = MongoDBContext.FindIQBuzzUser(user_id);
+
+            // TODO: need to add validation
+            exisitingUser.language_code = languageCode;
+
+            MongoDBContext.UpdateIQBUzzUser(exisitingUser);
+
+            return $"User: {exisitingUser.first_name} {exisitingUser.last_name} language code set tp [{exisitingUser.language_code}]";
+        }
+
         #endregion
 
         #region === Welcome Message =====================================================
@@ -319,7 +332,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"xtobr39@hotmail.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
-                        merchant_ids = new List<int>() { 1 }
+                        merchant_ids = new List<int>() { 1 },
+                        language_code = LanguageType.ENGLISH.ToString()
                     }
                 },
                 {
@@ -332,7 +346,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Marco.Fernandes@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
-                        merchant_ids = new List<int>() { 2 }
+                        merchant_ids = new List<int>() { 2 },
+                        language_code = LanguageType.ENGLISH.ToString()
                     }
                 },
                 {
@@ -345,7 +360,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Dusty.Gomez@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
-                        merchant_ids = new List<int>() { 3 }
+                        merchant_ids = new List<int>() { 3 },
+                        language_code = LanguageType.ENGLISH.ToString()
                     }
                 },
                 {
@@ -358,7 +374,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Joshua.Byrne@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
-                        merchant_ids = new List<int>() { 4 }
+                        merchant_ids = new List<int>() { 4 },
+                        language_code = LanguageType.ENGLISH.ToString()
                     }
                 },
                 {
@@ -371,7 +388,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Axex.Boeding@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
-                        merchant_ids = new List<int>() { 5 }
+                        merchant_ids = new List<int>() { 5 },
+                        language_code = LanguageType.ENGLISH.ToString()
                     }
                 },
                 {
@@ -384,7 +402,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Pallavi.Sher@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
-                        merchant_ids = new List<int>() { 6 }
+                        merchant_ids = new List<int>() { 6 },
+                        language_code = LanguageType.ENGLISH.ToString()
                     }
                 },
                 {
@@ -397,7 +416,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Joe.Pellar@worldpay.com",
                         local_time_zone = @"CST",
                         has_accepted_welcome_agreement = true,
-                        merchant_ids = new List<int>() { 7 }
+                        merchant_ids = new List<int>() { 7 },
+                        language_code = LanguageType.ENGLISH.ToString()
                     }
                 },
                 {
@@ -410,7 +430,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Jianan.Hou@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
-                        merchant_ids = new List<int>() { 8 }
+                        merchant_ids = new List<int>() { 8 },
+                        language_code = LanguageType.ENGLISH.ToString()
                     }
                 },
                 {
@@ -423,7 +444,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Jon.Pollock@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
-                        merchant_ids = new List<int>() { 9 }
+                        merchant_ids = new List<int>() { 9 },
+                        language_code = LanguageType.ENGLISH.ToString()
                     }
                 }
             };
