@@ -1,5 +1,5 @@
 ﻿using System;
-
+using System.Collections.Generic;
 using WP.Learning.BizLogic.Shared;
 using WP.Learning.BizLogic.Shared.Controllers;
 using WP.Learning.MongoDB;
@@ -272,8 +272,11 @@ namespace WP.Learning.BackOffice.Console
 
             var user = MongoDBContext.FindIQBuzzUser(userId);
 
-            string response = RequestController.ProcessIncommingText(user.phone_no, command);
-            System.Console.Write(response);
+            List<string> responses = RequestController.ProcessIncommingText(user.phone_no, command);
+            foreach (string response in responses)
+            {
+                System.Console.Write(response);
+            }
             System.Console.Write("\n Hit Return to continue ...");
             System.Console.ReadLine();
         }

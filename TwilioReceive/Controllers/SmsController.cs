@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Twilio.AspNet.Common;
 using Twilio.AspNet.Core;
 using Twilio.TwiML;
-
+using Twilio.TwiML.Messaging;
 using WP.Learning.BizLogic.Shared.Controllers;
 
 namespace TwilioReceive.Controllers
@@ -25,14 +25,14 @@ namespace TwilioReceive.Controllers
             // pull out the command that was texted
             string requestBody = incomingMessage.Body.ToLower().Trim();
 
-            string responseText = string.Empty;
+            List<string> responseText = new List<string>();
 
             // ===================================================
             // Logic to recognize all of the supported commands
             // ===================================================
             if (requestBody == @"ping")   
             {
-                responseText = @"icmp echo";
+                responseText.Add(@"icmp echo");
             }
             else
             {
@@ -42,7 +42,15 @@ namespace TwilioReceive.Controllers
 
             // build the response
             var response = new MessagingResponse();
-            response.Message(responseText);
+            
+            //response.Message(responseText);
+            foreach (string msgPart in responseText)
+            {
+                response.Append(new Message(msgPart));
+            }
+
+            //string allReponseText = string.Join("", responseText);
+            //response.Message(allReponseText);
 
             // return the response
             return TwiML(response);

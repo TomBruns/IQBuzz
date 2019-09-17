@@ -102,9 +102,12 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             MongoDBContext.InsertUserActivity(userActivity);
         }
 
-        public static void LogUserActivity(string fromPhoneNumber, string action, DateTime activityDT, string comments)
+        public static void LogUserActivity(string fromPhoneNumber, string action, DateTime activityDT, List<string> comments)
         {
-            LogUserActivity(new UserActivityMBE() { phone_no = fromPhoneNumber, action = action, activity_dt = activityDT, comments = comments });
+            foreach (string comment in comments)
+            {
+                LogUserActivity(new UserActivityMBE() { phone_no = fromPhoneNumber, action = action, activity_dt = activityDT, comments = comment });
+            }
         }
 
         public static List<UserDailyUsageSummaryBE> GetUserActivitySummaryByDay(DateTime fromDate, string usersTimeZoneAbbreviation)
@@ -166,21 +169,32 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         public static string BuildWelcomeMessage(IQBuzzUserBE iqBuzzUser)
         {
             string welcomeMsg = string.Empty;
+            var merchant = MongoDBContext.FindMerchantById(iqBuzzUser.merchant_ids.First());
 
             if (!iqBuzzUser.has_accepted_welcome_agreement)
             {
-                welcomeMsg = $"Hi {iqBuzzUser.first_name} {iqBuzzUser.last_name}, Welcome to IQ Buzz\n"
-                   + $"Reply YES to confirm enrollment in {GeneralConstants.APP_NAME}. "
-                   + "Msg&Data rates may appy. Msg freq varies by acct and prefs.";
+                //welcomeMsg = $"Hi {iqBuzzUser.first_name} {iqBuzzUser.last_name}, Welcome to IQ Buzz\n"
+                //   + $"Reply YES to confirm enrollment in {GeneralConstants.APP_NAME}. "
+                //   + "Msg&Data rates may appy. Msg freq varies by acct and prefs.";
+
+                welcomeMsg = $"Hello, {iqBuzzUser.FullName}!\n"
+                    + $"On behalf of FIS, thank you for trusting us with {merchant.merchant_name}'s payment acceptance.\n"
+                    + "My name is Buzz, and I’ll keep you informed of key activity on your account.\n"
+                    + "To confirm your subscription, reply YES to this message.";
             }
             else
             {
-                welcomeMsg = $"Hi {iqBuzzUser.first_name} {iqBuzzUser.last_name}, Welcome to IQ Buzz\n"
-                   + $"You have already confirmed enrollment in {GeneralConstants.APP_NAME}. "
-                   + "Msg&Data rates may appy. Msg freq varies by acct and prefs.";
+                //welcomeMsg = $"Hi {iqBuzzUser.first_name} {iqBuzzUser.last_name}, Welcome to IQ Buzz\n"
+                //   + $"You have already confirmed enrollment in {GeneralConstants.APP_NAME}. "
+                //   + "Msg&Data rates may appy. Msg freq varies by acct and prefs.";
+
+                welcomeMsg = $"Hello, {iqBuzzUser.FullName}!\n"
+                    + $"On behalf of FIS, thank you for trusting us with {merchant.merchant_name}'s payment acceptance.\n"
+                    + "My name is Buzz, and I’ll keep you informed of key activity on your account.\n"
+                    + "You have already confirmed enrollment.";
             }
 
-            welcomeMsg += @"Hint: You can always text HELP? or ??? to see a list of commands.";
+            //welcomeMsg += @"Hint: You can always text HELP? or ??? to see a list of commands.";
 
             return welcomeMsg;
         }
@@ -223,7 +237,9 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 MongoDBContext.UpdateIQBUzzUser(user);
 
                 returnMsg = isAccepted
-                        ? $"Welcome to {GeneralConstants.APP_NAME}, you are all setup! Hint: You can always text HELP? or ??? to see a list of commands."
+                        ? $"Great! Welcome to iQBuzz!\n"
+                            + "If you add my number to your contact book, you’ll always know it’s me when I message you.\n"
+                            + "And then you can also tell your voice assistant what you need my help with!\n"
                         : "We are sorry you choose not to join, text JOIN at any time to have another opportunity to accept.";
             }
 
@@ -252,7 +268,6 @@ namespace WP.Learning.BizLogic.Shared.Controllers
 
             return configMsg;
         }
-
 
         #region --- Helpers --------------------------------------------------------
         private static Dictionary<string, IQBuzzUserMBE> BuildIQBuzzUsersLU()
