@@ -72,6 +72,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 sb.AppendLine($"Phone No: {user.phone_no}");
                 sb.AppendLine($"Timezone: {user.local_time_zone}");
                 sb.AppendLine($"Prefered Language: {LanguageType.GetDescription(user.language_code)}");
+                sb.AppendLine($"  Hint: To chg Buzz's language text lang?");
                 sb.AppendLine($"--------------------------------------");
                 sb.AppendLine($"Locations:");
                 foreach (var merchant in user.Merchants)
@@ -80,6 +81,10 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 }
 
                 responseMsgs.Add(sb.ToString());
+            }
+            else if (requestBody == @"lang?")
+            {
+                responseMsgs.Add(LanguageType.GetSupportedLanguages(@"lang"));
             }
             else if (requestBody.StartsWith(@"lang"))    // set user language
             {
