@@ -82,7 +82,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
 
                 responseMsgs.Add(sb.ToString());
             }
-            else if (requestBody == @"lang?")
+            else if (requestBody == @"lang?" || requestBody == @"lang")
             {
                 responseMsgs.Add(LanguageType.GetSupportedLanguages(@"lang"));
             }
@@ -248,6 +248,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             helpMsg.AppendLine("help?:  this list");
             helpMsg.AppendLine("join:  resend welcome message");
             helpMsg.AppendLine("Settings:  view/update alert settings");
+            helpMsg.AppendLine("User:  Account Details");
             helpMsg.AppendLine("User:  Account Details");
             helpMsg.AppendLine("");
             helpMsg.AppendLine("To see this list again at any time, text help? or ??? back to me.");

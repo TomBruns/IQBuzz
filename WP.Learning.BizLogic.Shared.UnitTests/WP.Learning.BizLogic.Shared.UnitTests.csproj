@@ -5,7 +5,7 @@
 
     <IsPackable>false</IsPackable>
 
-    <FileVersion>1.19.0919.8</FileVersion>
+    <FileVersion>1.19.0919.9</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
