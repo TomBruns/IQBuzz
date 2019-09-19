@@ -14,6 +14,11 @@ using WP.Learning.BizLogic.Shared.Controllers;
 
 namespace TwilioReceive.Controllers
 {
+    /// <summary>
+    /// This class is the public API that will be called by Twilio
+    /// Implements the <see cref="Twilio.AspNet.Core.TwilioController" />
+    /// </summary>
+    /// <seealso cref="Twilio.AspNet.Core.TwilioController" />
     public class SmsController : TwilioController
     {
         [HttpPost]
@@ -30,6 +35,7 @@ namespace TwilioReceive.Controllers
             // ===================================================
             // Logic to recognize all of the supported commands
             // ===================================================
+            // ping is a simple cmd for testing that has no dependencies (ie DB)
             if (requestBody == @"ping")   
             {
                 responsesText.Add(@"icmp echo");
@@ -46,6 +52,7 @@ namespace TwilioReceive.Controllers
             //response.Message(responseText);
             foreach (string responseText in responsesText)
             {
+                // each child message will be semt as a separate SMS message
                 response.Append(new Message(responseText));
             }
 

@@ -4,6 +4,8 @@ using System.Text;
 
 namespace WP.Learning.BizLogic.Shared.Entities
 {
+    // This class is like a strin enum
+    // We need to find a better implemenation
     public class LanguageType
     {
         private string _languageType;
@@ -24,5 +26,24 @@ namespace WP.Learning.BizLogic.Shared.Entities
         public static LanguageType SPANISH = new LanguageType("es");
         public static LanguageType PORTUGUESE = new LanguageType("pt");
         public static LanguageType GERMAN = new LanguageType("de");
+
+        public static string GetDescription(string languageType)
+        {
+            switch(languageType)
+            {
+                case @"en":
+                    return @"English (en)";
+                case @"fr":
+                    return @"French (fr)";
+                case @"es":
+                    return @"Spanish (es)";
+                case @"pt":
+                    return @"Portuguese (pt)";
+                case @"de":
+                    return @"German (de)";
+                default:
+                    return $"Unknown ({languageType})";
+            }
+        }
     }
 }

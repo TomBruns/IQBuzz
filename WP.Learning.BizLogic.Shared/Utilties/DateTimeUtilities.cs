@@ -30,7 +30,7 @@ namespace WP.Learning.BizLogic.Shared.Utilties
             }
         }
 
-        public static DateTime CovertToUserLocalDT (DateTime originalDT, string timeZoneAbbreviation)
+        public static DateTime CovertToUserLocalDT (this DateTime originalDT, string timeZoneAbbreviation)
         {
             TimeZoneInfo usersTimeZone = GetTimeZoneInfo(timeZoneAbbreviation);
 

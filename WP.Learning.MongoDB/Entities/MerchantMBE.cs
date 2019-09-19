@@ -44,9 +44,11 @@ namespace WP.Learning.MongoDB.Entities
         // time to alert if all terminals are not closed with terminal data capture
         public TimeSpan? manual_close_alert_hh_mm { get; set; }
         public bool is_fast_funding_enabled { get; set; }
-        //public bool is_accepted_welcome_agreement { get; set; }
-
         public string debit_card_no { get; set; }
+
+        public bool supports_cp_xcts { get; set; }
+        public bool supports_cnp_xcts { get; set; }
+        public bool supports_returns_xcts { get; set; }
     }
     
     // defines the terminals configured for a merchant

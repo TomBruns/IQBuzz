@@ -5,7 +5,7 @@
     <UserSecretsId>16266bd2-1214-4dbe-bd44-e85f48632a6d</UserSecretsId>
     <!--AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel-->
     <EnableMSDeployAppOffline>true</EnableMSDeployAppOffline>
-    <FileVersion>1.19.0917.20</FileVersion>
+    <FileVersion>1.19.0919.7</FileVersion>
   </PropertyGroup>
   
   <ItemGroup>

@@ -12,8 +12,7 @@ namespace WP.Learning.MongoDB.Entities
             cp_sale = 1,
             cnp_sale = 2,
             credit_return = 3,
-            chargeback = 4,
-            //auth_failure = 5
+            chargeback = 4
         }
 
         public enum PAYMENT_CARD_TYPE

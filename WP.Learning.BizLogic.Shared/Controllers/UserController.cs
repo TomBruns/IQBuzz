@@ -167,7 +167,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
 
             MongoDBContext.UpdateIQBUzzUser(exisitingUser);
 
-            return $"User: {exisitingUser.first_name} {exisitingUser.last_name} language code set tp [{exisitingUser.language_code}]";
+            return $"User: {exisitingUser.first_name} {exisitingUser.last_name} language set to [{LanguageType.GetDescription(exisitingUser.language_code)}]";
         }
 
         #endregion
@@ -182,14 +182,11 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         public static string BuildWelcomeMessage(IQBuzzUserBE iqBuzzUser)
         {
             string welcomeMsg = string.Empty;
+
             var merchant = MongoDBContext.FindMerchantById(iqBuzzUser.merchant_ids.First());
 
             if (!iqBuzzUser.has_accepted_welcome_agreement)
             {
-                //welcomeMsg = $"Hi {iqBuzzUser.first_name} {iqBuzzUser.last_name}, Welcome to IQ Buzz\n"
-                //   + $"Reply YES to confirm enrollment in {GeneralConstants.APP_NAME}. "
-                //   + "Msg&Data rates may appy. Msg freq varies by acct and prefs.";
-
                 welcomeMsg = $"Hello, {iqBuzzUser.FullName}!\n"
                     + $"On behalf of FIS, thank you for trusting us with {merchant.merchant_name}'s payment acceptance.\n"
                     + "My name is Buzz, and I’ll keep you informed of key activity on your account.\n"
@@ -197,17 +194,11 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             }
             else
             {
-                //welcomeMsg = $"Hi {iqBuzzUser.first_name} {iqBuzzUser.last_name}, Welcome to IQ Buzz\n"
-                //   + $"You have already confirmed enrollment in {GeneralConstants.APP_NAME}. "
-                //   + "Msg&Data rates may appy. Msg freq varies by acct and prefs.";
-
                 welcomeMsg = $"Hello, {iqBuzzUser.FullName}!\n"
                     + $"On behalf of FIS, thank you for trusting us with {merchant.merchant_name}'s payment acceptance.\n"
                     + "My name is Buzz, and I’ll keep you informed of key activity on your account.\n"
                     + "You have already confirmed enrollment.";
             }
-
-            //welcomeMsg += @"Hint: You can always text HELP? or ??? to see a list of commands.";
 
             return welcomeMsg;
         }
@@ -251,8 +242,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
 
                 returnMsg = isAccepted
                         ? $"Great! Welcome to iQBuzz!\n"
-                            + "If you add my number to your contact book, you’ll always know it’s me when I message you.\n"
-                            + "And then you can also tell your voice assistant what you need my help with!\n"
+                            + $"If you add my number: {GeneralConstants.TWILIO_PHONE_NO} to your contact book, you’ll always know it’s me when I message you.\n"
+                            + "And then you can tell your phone's voice assistant what you need my help with!\n"
                         : "We are sorry you choose not to join, text JOIN at any time to have another opportunity to accept.";
             }
 

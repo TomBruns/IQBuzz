@@ -10,7 +10,9 @@ namespace WP.Learning.BizLogic.Shared.Entities
     /// </summary>
     public class XctDailySummaryBE
     {
-        public List<XctTypeDailySummaryBE> SalesSummary { get; set; }
+        public List<XctTypeDailySummaryBE> CPSalesSummary { get; set; }
+
+        public List<XctTypeDailySummaryBE> CNPSalesSummary { get; set; }
 
         public List<XctTypeDailySummaryBE> ReturnsSummary { get; set; }
 
@@ -21,11 +23,13 @@ namespace WP.Learning.BizLogic.Shared.Entities
     {
         public TRANSACTION_TYPE XctType { get; set; }
 
-        public int XctCount { get; set; }
+        public int SuccessXctCount { get; set; }
 
-        public decimal XctTotalValue { get; set; }
+        public decimal SuccessXctSubtotalValue { get; set; }
 
-        public bool isAuthFailure { get; set; }
+        public int FailureXctCount { get; set; }
+
+        public decimal FailureXctSubtotalValue { get; set; }
 
         public string XctTypeDesc
         {
@@ -36,9 +40,9 @@ namespace WP.Learning.BizLogic.Shared.Entities
                     case TRANSACTION_TYPE.chargeback:
                         return @"Chargebacks";
                     case TRANSACTION_TYPE.cnp_sale:
-                        return !isAuthFailure ? @"Online Sales" : @"Online Sales (Auth Failure)";
+                        return @"Online Sales";
                     case TRANSACTION_TYPE.cp_sale:
-                        return !isAuthFailure ? @"In-Store Sales" : @"In-Store Sales (Auth Failure)";
+                        return @"In-Store Sales";
                     case TRANSACTION_TYPE.credit_return:
                         return @"Returns";
                     default:

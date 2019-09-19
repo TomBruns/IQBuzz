@@ -116,50 +116,82 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         }
 
         // Command: Summary 
-        public static string BuildOverallSummaryMessage(List<int> merchantIds, DateTime xctPostingDate, string currentUserTimeZone)
+        public static string BuildOverallSummaryMessage(List<int> merchantIds, DateTime xctPostingDateUTC, string userTZCode)
         {
-            DateTime asOfLocalDT = DateTime.Now;
-            DateTime asOfUserDT = DateTimeUtilities.CovertToUserLocalDT(asOfLocalDT, currentUserTimeZone);
-
             int merchantId = merchantIds[0];
 
             MerchantMBE merchant = MongoDBContext.FindMerchantById(merchantId);
 
-            XctDailySummaryBE xctSummary = MerchantController.GetXctDailySummary(merchantId, xctPostingDate);
+            XctDailySummaryBE xctSummary = MerchantController.GetXctDailySummary(merchantId, xctPostingDateUTC);
+
+            DateTime xctPostingDateUser = DateTimeUtilities.CovertToUserLocalDT(xctPostingDateUTC, userTZCode);
+            DateTime currentUserDT = DateTimeUtilities.CovertToUserLocalDT(DateTime.Now.ToUniversalTime(), userTZCode);
+            string currentUserTimeText = $"{currentUserDT.ToString("h:mm tt")} {userTZCode}";
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"Merchant Account Summary for: {xctPostingDate:ddd MMM dd, yyyy} as of {asOfUserDT.ToString("h:mm tt")} ");
+            sb.AppendLine($"Overall Summary for: {xctPostingDateUser:ddd MMM dd, yyyy} as of: {currentUserTimeText}");
             sb.AppendLine("---------------------------------------------------------");
 
             if (xctSummary != null)
             {
                 decimal netTotal = 0.00M;
                 bool isFirstLine = true;
+                decimal authPercentage = 0M;
 
-                // sales
-                foreach (var xctType in xctSummary.SalesSummary)
+                // cp sales
+                if (merchant.setup_options.supports_cp_xcts)
                 {
-                    netTotal += !xctType.isAuthFailure ? xctType.XctTotalValue : 0;
+                    foreach (var xctType in xctSummary.CPSalesSummary)
+                    {
+                        // only sum total for auth success
+                        netTotal += xctType.SuccessXctSubtotalValue;
+                        // use Decimal.Divide because there are all ints
+                        authPercentage = Decimal.Divide(xctType.SuccessXctCount, (xctType.SuccessXctCount + xctType.FailureXctCount));
 
-                    if(!isFirstLine) { sb.AppendLine(); }
+                        if (!isFirstLine) { sb.AppendLine(); }
 
-                    sb.AppendLine($"{xctType.XctTypeDesc}:");
-                    sb.AppendLine($" {xctType.XctTotalValue:C} [{xctType.XctCount} txns]");
+                        sb.AppendLine($"{xctType.XctTypeDesc}:");
+                        sb.AppendLine($" {xctType.SuccessXctSubtotalValue:C} [{xctType.SuccessXctCount} xcts] Auth: {authPercentage:P}");
 
-                    isFirstLine = false;
+                        isFirstLine = false;
+                    }
+                }
+
+                // cnp sales
+                if (merchant.setup_options.supports_cnp_xcts)
+                {
+                    foreach (var xctType in xctSummary.CNPSalesSummary)
+                    {
+                        // only sum total for auth success
+                        netTotal += xctType.SuccessXctSubtotalValue;
+                        // use Decimal.Divide because there are all ints
+                        authPercentage = Decimal.Divide(xctType.SuccessXctCount, (xctType.SuccessXctCount + xctType.FailureXctCount));
+
+                        if (!isFirstLine) { sb.AppendLine(); }
+
+                        sb.AppendLine($"{xctType.XctTypeDesc}:");
+                        sb.AppendLine($" {xctType.SuccessXctSubtotalValue:C} [{xctType.SuccessXctCount} xcts] Auth: {authPercentage:P}");
+
+                        isFirstLine = false;
+                    }
                 }
 
                 // returns
-                foreach (var xctType in xctSummary.ReturnsSummary)
+                if (merchant.setup_options.supports_returns_xcts)
                 {
-                    netTotal += !xctType.isAuthFailure ? xctType.XctTotalValue : 0;
+                    foreach (var xctType in xctSummary.ReturnsSummary)
+                    {
+                        netTotal += xctType.SuccessXctSubtotalValue;
+                        // use Decimal.Divide because there are all ints
+                        authPercentage = Decimal.Divide(xctType.SuccessXctCount, (xctType.SuccessXctCount + xctType.FailureXctCount));
 
-                    if (!isFirstLine) { sb.AppendLine(); }
+                        if (!isFirstLine) { sb.AppendLine(); }
 
-                    sb.AppendLine($"{xctType.XctTypeDesc}:");
-                    sb.AppendLine($" {xctType.XctTotalValue:C} [{xctType.XctCount} txns]");
+                        sb.AppendLine($"{xctType.XctTypeDesc}:");
+                        sb.AppendLine($" {xctType.SuccessXctSubtotalValue:C} [{xctType.SuccessXctCount} xcts] Auth: {authPercentage:P}");
 
-                    isFirstLine = false;
+                        isFirstLine = false;
+                    }
                 }
 
                 sb.AppendLine($"============================");
@@ -170,16 +202,28 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 foreach (var xctType in xctSummary.ChargebacksSummary)
                 {
                     sb.AppendLine($"{xctType.XctTypeDesc}:");
-                    sb.AppendLine($" {xctType.XctTotalValue:C} [{xctType.XctCount} txns]");
+                    sb.AppendLine($" {xctType.SuccessXctSubtotalValue:C} [{xctType.SuccessXctCount} xcts]");
                 }
                 if (xctSummary.ChargebacksSummary != null && xctSummary.ChargebacksSummary.Count > 0)
                 {
                     sb.AppendLine("  (text CBACK for details)");
                 }
 
+                // build batch close info
+                sb.AppendLine();
+                if(merchant.setup_options.is_host_data_capture_enabled)
+                {
+                    sb.AppendLine($"Your batches will Auto Close at 10:00PM");
+                }
+                else
+                {
+                    sb.AppendLine($"Remember to close your batches by: [{merchant.setup_options.manual_close_alert_hh_mm:h:mm tt}]");
+                }
+
                 sb.AppendLine();
                 sb.AppendLine($"Final settlement amount will be deposited into your checking account ending in x{merchant.setup_options.debit_card_no.Substring(1, 4)} on {DateTime.Now.AddBusinessDays(2).ToString("ddd MMM dd, yyyy")}");
-                sb.AppendLine($" to receive these funds tomorrow morning reply FAF");
+                sb.AppendLine();
+                sb.AppendLine($"To receive these funds tomorrow morning reply FAF");
             }
             else
             {
@@ -190,16 +234,17 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         }
 
         // Command: Sales
-        public static string BuildSalesSummaryMessage(List<int> merchantIds, DateTime xctPostingDate, string currentUserTimeZone)
+        public static string BuildSalesSummaryMessage(List<int> merchantIds, DateTime xctPostingDateUTC, string userTZCode)
         {
-            DateTime asOfLocalDT = DateTime.Now;
-            DateTime asOfUserDT = DateTimeUtilities.CovertToUserLocalDT(asOfLocalDT, currentUserTimeZone);
+            DateTime xctPostingDateUser = DateTimeUtilities.CovertToUserLocalDT(xctPostingDateUTC, userTZCode);
+            DateTime currentUserDT = DateTimeUtilities.CovertToUserLocalDT(DateTime.Now.ToUniversalTime(), userTZCode);
+            string currentUserTimeText = $"{currentUserDT.ToString("h:mm tt")} {userTZCode}";
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"Merchant Account Summary as of: {asOfUserDT.ToString("ddd MMM dd, yyyy h:mm tt")}");
+            sb.AppendLine($"Sales Summary as of: {currentUserTimeText}");
             sb.AppendLine();
 
-            var merchantsActivity = MongoDBContext.FindMerchantsDailyActivity(merchantIds, xctPostingDate);
+            var merchantsActivity = MongoDBContext.FindMerchantsDailyActivity(merchantIds, xctPostingDateUTC);
 
             if (merchantsActivity != null)
             {
@@ -228,7 +273,6 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 sb.AppendLine($"In-Store:");
                 if (cpTotalQty > 0)
                 {
-
                     sb.AppendLine($"{cpSales:C} [{cpQty} txns] Auth: {cpSalesPassesAuthPercentage:P}");
                 }
                 else
@@ -289,19 +333,20 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         }
 
         // Command: Returns
-        public static string BuildReturnsSummaryMessage(List<int> merchantIds, DateTime xctPostingDate, string currentUserTimeZone)
+        public static string BuildReturnsSummaryMessage(List<int> merchantIds, DateTime xctPostingDateUTC, string userTZCode)
         {
-            DateTime asOfLocalDT = DateTime.Now;
-            DateTime asOfUserDT = DateTimeUtilities.CovertToUserLocalDT(asOfLocalDT, currentUserTimeZone);
-
             int merchantId = merchantIds[0];
 
+            DateTime xctPostingDateUser = DateTimeUtilities.CovertToUserLocalDT(xctPostingDateUTC, userTZCode);
+            DateTime currentUserDT = DateTimeUtilities.CovertToUserLocalDT(DateTime.Now.ToUniversalTime(), userTZCode);
+            string currentUserTimeText = $"{currentUserDT.ToString("h:mm tt")} {userTZCode}";
+
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"Merchant Account Summary as of {asOfUserDT.ToString("ddd MMM dd, yyyy h:mm tt")}");
+            sb.AppendLine($"Returns Summary as of: {currentUserTimeText}");
             sb.AppendLine();
             sb.AppendLine($"Returns:");
 
-            var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
+            var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDateUTC);
 
             if (merchantActivity != null && merchantActivity.transactions != null && merchantActivity.transactions.Count() > 0)
             {
@@ -330,18 +375,19 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         }
 
         // Command: Cback
-        public static string BuildChargebackDetails(List<int> merchantIds, DateTime xctPostingDate, string currentUserTimeZone)
+        public static string BuildChargebackDetails(List<int> merchantIds, DateTime xctPostingDateUTC, string userTZCode)
         {
-            DateTime asOfLocalDT = DateTime.Now;
-            DateTime asOfUserDT = DateTimeUtilities.CovertToUserLocalDT(asOfLocalDT, currentUserTimeZone);
-
             var merchantId = merchantIds[0];
 
+            DateTime xctPostingDateUser = DateTimeUtilities.CovertToUserLocalDT(xctPostingDateUTC, userTZCode);
+            DateTime currentUserDT = DateTimeUtilities.CovertToUserLocalDT(DateTime.Now.ToUniversalTime(), userTZCode);
+            string currentUserTimeText = $"{currentUserDT.ToString("h:mm tt")} {userTZCode}";
+
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"Pending Chargeback Details as of {asOfUserDT.ToString("ddd MMM dd, yyyy h:mm tt")}");
+            sb.AppendLine($"Pending Chargeback Details as of: {currentUserTimeText}");
             sb.AppendLine(@"----------------------------------------------------------");
 
-            var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
+            var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDateUTC);
 
             if (merchantActivity != null && merchantActivity.transactions != null && merchantActivity.transactions.Count() > 0)
             {
@@ -355,27 +401,23 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                     {
                         chargebackCount++;
 
-                        //if (chargebackCount > 1)
-                        //{
-                        //    sb.AppendLine();
-                        //}
-
                         DateTime dueDate = chargebackXct.xct_dt.AddDays(3);
 
-                        sb.AppendLine($"{chargebackXct.xct_amount:C} Card (Last 4): x{chargebackXct.card_data.primary_account_no.Right(4)} Respond By: {dueDate.ToString("ddd MMM dd, yyyy")}");
+                        sb.AppendLine($"{chargebackXct.xct_amount:C} Card (Last 4): x{chargebackXct.card_data.primary_account_no.Right(4)}");
+                        sb.AppendLine($"    Respond By: {dueDate.ToString("ddd MMM dd, yyyy")}");
                     }
-                    sb.AppendLine(@"==========================================================");
+                    sb.AppendLine(@"====================================");
                     sb.AppendLine($"Total: {chargebackXcts.Sum(x => x.xct_amount):C}  Qty: {chargebackCount}");
+                    sb.AppendLine();
                     sb.AppendLine($"  To respond to your Chargebacks, go to IQ: {GeneralConstants.CHARGEBACK_URL}");
                 }
                 else
                 {
-                    sb.AppendLine($"$0.00 [0 txns]");
-                    //sb.AppendLine(@"There are no outstanding chargebacks.");
+                    sb.AppendLine(@"You have no pending chargebacks!");
                 }
             }
-            else {
-                //sb.AppendLine($"$0.00 [0 txns]");
+            else
+            {
                 sb.AppendLine(@"You have no pending chargebacks!");
             }
 
@@ -398,16 +440,18 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         #region === FAF Messages =========================================
         
         // Command: FAF
-        public static string BuildFAFMessage(int merchantId, DateTime xctPostingDate)
+        public static string BuildFAFMessage(int merchantId)
         {
+            DateTime activityDate = DateTime.Now.ToUniversalTime();
+
             string response = string.Empty;
 
             var merchant = MongoDBContext.FindMerchantById(merchantId);
-            var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
+            var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, activityDate);
 
             if (merchantDailyActivity == null)
             {
-                merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = xctPostingDate };
+                merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = activityDate };
                 MongoDBContext.InsertMerchantDailyActivity(merchantDailyActivity);
             }
 
@@ -425,15 +469,17 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         }
 
         // Command: Confirm
-        public static string BuildConfirmFAFMessage(int merchantId, DateTime xctPostingDate)
+        public static string BuildConfirmFAFMessage(int merchantId)
         {
+            DateTime activityDate = DateTime.Now.ToUniversalTime();
+
             string response = string.Empty;
 
-            var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
+            var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, activityDate);
 
             if (merchantDailyActivity == null)
             {
-                merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = xctPostingDate };
+                merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = activityDate };
                 MongoDBContext.InsertMerchantDailyActivity(merchantDailyActivity);
             }
 
@@ -454,15 +500,17 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         }
 
         // Command: Undo
-        public static string BuildUndoFAFMessage(int merchantId, DateTime xctPostingDate)
+        public static string BuildUndoFAFMessage(int merchantId)
         {
+            DateTime activityDate = DateTime.Now.ToUniversalTime();
+
             string response = string.Empty;
 
-            var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
+            var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, activityDate);
 
             if (merchantDailyActivity == null)
             {
-                merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = xctPostingDate };
+                merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = activityDate };
                 MongoDBContext.InsertMerchantDailyActivity(merchantDailyActivity);
             }
 
@@ -475,7 +523,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             {
                 response = @"Funds for this Final Settlement amount will Not use Fast Access Funding and will be deposited on the normal date.";
 
-                var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
+                var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, activityDate);
                 merchantActivity.is_fast_access_funding_enabled = false;
                 MongoDBContext.UpdateMerchantDailyActivity(merchantActivity);
             }
@@ -499,6 +547,13 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             return merchant;
         }
 
+        public static MerchantMBE GetMerchant(int merchantId)
+        {
+            var merchant = MongoDBContext.FindMerchantById(merchantId);
+
+            return merchant;
+        }
+
         /// <summary>
         /// Build a Xct Summary for the specified merchant & date
         /// </summary>
@@ -511,9 +566,13 @@ namespace WP.Learning.BizLogic.Shared.Controllers
 
             XctDailySummaryBE results = null;
 
-            List<Enums.TRANSACTION_TYPE> salesXctTypes = new List<Enums.TRANSACTION_TYPE>()
+            List<Enums.TRANSACTION_TYPE> cpSalesXctTypes = new List<Enums.TRANSACTION_TYPE>()
             {
-                Enums.TRANSACTION_TYPE.cp_sale,
+                Enums.TRANSACTION_TYPE.cp_sale
+            };
+
+            List<Enums.TRANSACTION_TYPE>cnpSalesXctTypes = new List<Enums.TRANSACTION_TYPE>()
+            {
                 Enums.TRANSACTION_TYPE.cnp_sale
             };
 
@@ -533,40 +592,56 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             {
                 results = new XctDailySummaryBE();
 
-                results.SalesSummary = merchantActivity.transactions
-                                    .Where(x => salesXctTypes.Contains(x.xct_type))
+                results.CPSalesSummary = merchantActivity.transactions
+                                    .Where(x => cpSalesXctTypes.Contains(x.xct_type))
                                     .OrderBy(x => x.xct_type)
-                                    .GroupBy(x => new { x.xct_type, x.is_Auth_Failed})
+                                    .GroupBy(x => new { x.xct_type })
                                     .Select(x => new XctTypeDailySummaryBE()
                                     {
                                         XctType = x.Key.xct_type,
-                                        XctCount = x.Count(),
-                                        XctTotalValue = x.Sum(r => r.xct_amount),
-                                        isAuthFailure = x.Key.is_Auth_Failed
+                                        SuccessXctCount = x.Where(r => r.is_Auth_Failed == false).Count(),
+                                        SuccessXctSubtotalValue = x.Where(r => r.is_Auth_Failed == false).Sum(r => r.xct_amount),
+                                        FailureXctCount = x.Where(r => r.is_Auth_Failed == true).Count(),
+                                        FailureXctSubtotalValue = x.Where(r => r.is_Auth_Failed == true).Sum(r => r.xct_amount),
+                                    }).ToList();
+
+                results.CNPSalesSummary = merchantActivity.transactions
+                                    .Where(x => cnpSalesXctTypes.Contains(x.xct_type))
+                                    .OrderBy(x => x.xct_type)
+                                    .GroupBy(x => new { x.xct_type })
+                                    .Select(x => new XctTypeDailySummaryBE()
+                                    {
+                                        XctType = x.Key.xct_type,
+                                        SuccessXctCount = x.Where(r => r.is_Auth_Failed == false).Count(),
+                                        SuccessXctSubtotalValue = x.Where(r => r.is_Auth_Failed == false).Sum(r => r.xct_amount),
+                                        FailureXctCount = x.Where(r => r.is_Auth_Failed == true).Count(),
+                                        FailureXctSubtotalValue = x.Where(r => r.is_Auth_Failed == true).Sum(r => r.xct_amount),
                                     }).ToList();
 
                 results.ReturnsSummary = merchantActivity.transactions
                                     .Where(x => returnsXctTypes.Contains(x.xct_type))
                                     .OrderBy(x => x.xct_type)
-                                    .GroupBy(x => new { x.xct_type, x.is_Auth_Failed })
+                                    .GroupBy(x => new { x.xct_type })
                                     .Select(x => new XctTypeDailySummaryBE()
                                     {
                                         XctType = x.Key.xct_type,
-                                        XctCount = x.Count(),
-                                        XctTotalValue = x.Sum(r => r.xct_amount),
-                                        isAuthFailure = x.Key.is_Auth_Failed
+                                        SuccessXctCount = x.Where(r => r.is_Auth_Failed == false).Count(),
+                                        SuccessXctSubtotalValue = x.Where(r => r.is_Auth_Failed == false).Sum(r => r.xct_amount),
+                                        FailureXctCount = x.Where(r => r.is_Auth_Failed == true).Count(),
+                                        FailureXctSubtotalValue = x.Where(r => r.is_Auth_Failed == true).Sum(r => r.xct_amount),
                                     }).ToList();
 
                 results.ChargebacksSummary = merchantActivity.transactions
                                     .Where(x => chargeBacksXctTypes.Contains(x.xct_type))
                                     .OrderBy(x => x.xct_type)
-                                    .GroupBy(x => new { x.xct_type, x.is_Auth_Failed })
+                                    .GroupBy(x => new { x.xct_type })
                                     .Select(x => new XctTypeDailySummaryBE()
                                     {
                                         XctType = x.Key.xct_type,
-                                        XctCount = x.Count(),
-                                        XctTotalValue = x.Sum(r => r.xct_amount),
-                                        isAuthFailure = x.Key.is_Auth_Failed
+                                        SuccessXctCount = x.Where(r => r.is_Auth_Failed == false).Count(),
+                                        SuccessXctSubtotalValue = x.Where(r => r.is_Auth_Failed == false).Sum(r => r.xct_amount),
+                                        FailureXctCount = x.Where(r => r.is_Auth_Failed == true).Count(),
+                                        FailureXctSubtotalValue = x.Where(r => r.is_Auth_Failed == true).Sum(r => r.xct_amount),
                                     }).ToList();
 
             }
@@ -577,16 +652,47 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         #endregion
 
         #region === Generate Transactions ========================================
+        public static int GenerateSampleXcts(int merchantId, DateTime xctPostingDate)
+        {
+            // get merchant metadata (MDB ??)
+            var merchant = MongoDBContext.FindMerchantById(merchantId);
+
+            int xctsGenerated = 0;
+
+            if (merchant.setup_options.supports_cp_xcts)
+            {
+                xctsGenerated += GenerateSalesXcts(merchantId, xctPostingDate, Enums.TRANSACTION_TYPE.cp_sale);
+            }
+            if (merchant.setup_options.supports_cp_xcts)
+            {
+                xctsGenerated += GenerateSalesXcts(merchantId, xctPostingDate, Enums.TRANSACTION_TYPE.cnp_sale);
+            }
+            if (merchant.setup_options.supports_returns_xcts)
+            {
+                xctsGenerated += GenerateRefundXcts(merchantId, xctPostingDate);
+            }
+
+            xctsGenerated += GenerateChargebacksXcts(merchantId, xctPostingDate);
+
+            return xctsGenerated;
+        }
+
         /// <summary>
         /// Create and store a set of random transactions on the specified merchant
         /// </summary>
         /// <remarks>
         /// Used to drive demos
         /// </remarks>
-        public static int GenerateSalesXcts(int merchantId, DateTime xctPostingDate)
+        public static int GenerateSalesXcts(int merchantId, DateTime xctPostingDate, Enums.TRANSACTION_TYPE xctType )
         {
             // get merchant metadata (MDB ??)
             var merchant = MongoDBContext.FindMerchantById(merchantId);
+
+            if((xctType == Enums.TRANSACTION_TYPE.cp_sale && !merchant.setup_options.supports_cp_xcts)
+                || (xctType == Enums.TRANSACTION_TYPE.cnp_sale && !merchant.setup_options.supports_cnp_xcts))
+            {
+                return 0;
+            }
 
             #region Optionally Create MerchantDailyActivity record (if reqd)
             var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDate);
@@ -597,35 +703,50 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 {
                     merchant_id = merchantId,
                     xct_posting_date = xctPostingDate,
-                    open_start_dt = DateTime.Now
+                    open_start_dt = DateTime.Now.ToUniversalTime()
                 };
 
                 MongoDBContext.InsertMerchantDailyActivity(merchantActivity);
             }
             #endregion
 
-            int xctCntToGenerate = new Random().Next(5, 25);
+            int xctCntToGenerate = new Random().Next(35, 50);
             Random amountGenerator = new Random();
 
             var transactions = new List<TransactionMBE>();
 
             // create a random # of purchase xcts
-            for (int loopCtr = 1; loopCtr <= xctCntToGenerate; loopCtr++)
+            for (int loopCtr = 1; loopCtr <= xctCntToGenerate - 1; loopCtr++)
             {
                 int cardPresentIndicator = new Random().Next(1, 100);
 
                 transactions.Add(new TransactionMBE()
                 {
-                    terminal_id = merchant.terminals.OrderBy(t => Guid.NewGuid()).First().terminal_id,
+                    terminal_id = (xctType == Enums.TRANSACTION_TYPE.cp_sale) 
+                                    ? merchant.terminals.OrderBy(t => Guid.NewGuid()).First().terminal_id
+                                    : "Online",
                     card_data = _paymentCards.OrderBy(t => Guid.NewGuid()).First(),
-                    xct_amount = Math.Round(new decimal(amountGenerator.NextDouble() * 1000.0), 2),
-                    xct_dt = DateTime.Now,
+                    xct_amount = Math.Round(new decimal(amountGenerator.NextDouble() * 100.0), 2),
+                    xct_dt = DateTime.Now.ToUniversalTime(),
                     xct_id = Guid.NewGuid(),
-                    xct_type = (cardPresentIndicator % 2 == 0) ?
-                            Enums.TRANSACTION_TYPE.cp_sale : Enums.TRANSACTION_TYPE.cnp_sale,
-                    is_Auth_Failed = (xctCntToGenerate > 10 && loopCtr == xctCntToGenerate) ? true : false
+                    xct_type = xctType,
+                    is_Auth_Failed = false
                 });
             }
+
+            // add one auth failure
+            transactions.Add(new TransactionMBE()
+            {
+                terminal_id = (xctType == Enums.TRANSACTION_TYPE.cp_sale)
+                                    ? merchant.terminals.OrderBy(t => Guid.NewGuid()).First().terminal_id
+                                    : "Online",
+                card_data = _paymentCards.OrderBy(t => Guid.NewGuid()).First(),
+                xct_amount = Math.Round(new decimal(amountGenerator.NextDouble() * 100.0), 2),
+                xct_dt = DateTime.Now.ToUniversalTime(),
+                xct_id = Guid.NewGuid(),
+                xct_type = Enums.TRANSACTION_TYPE.cp_sale,
+                is_Auth_Failed = true
+            });
 
             // store xcts
             MongoDBContext.UpsertMerchantDailyActivity(merchantId, xctPostingDate, transactions);
@@ -647,7 +768,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 {
                     merchant_id = merchantId,
                     xct_posting_date = xctPostingDate,
-                    open_start_dt = DateTime.Now
+                    open_start_dt = DateTime.Now.ToUniversalTime()
                 };
 
                 MongoDBContext.InsertMerchantDailyActivity(merchantActivity);
@@ -667,7 +788,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                     terminal_id = merchant.terminals.OrderBy(t => Guid.NewGuid()).First().terminal_id,
                     card_data = _paymentCards.OrderBy(t => Guid.NewGuid()).First(),
                     xct_amount = Math.Round(new decimal(amountGenerator.NextDouble() * -100.0), 2),
-                    xct_dt = DateTime.Now,
+                    xct_dt = DateTime.Now.ToUniversalTime(),
                     xct_id = Guid.NewGuid(),
                     xct_type = Enums.TRANSACTION_TYPE.credit_return
                 });
@@ -693,7 +814,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 {
                     merchant_id = merchantId,
                     xct_posting_date = xctPostingDate,
-                    open_start_dt = DateTime.Now
+                    open_start_dt = DateTime.Now.ToUniversalTime()
                 };
 
                 MongoDBContext.InsertMerchantDailyActivity(merchantActivity);
@@ -711,7 +832,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             {
                 int deltaDays = -1 * deltaDaysGenerator.Next(1, 3); // creates a number between 1 and 12
 
-                DateTime xctDate = DateTime.Now.AddDays(deltaDays);
+                DateTime xctDate = DateTime.Now.ToUniversalTime().AddDays(deltaDays);
 
                 transactions.Add(new TransactionMBE()
                 {
@@ -728,17 +849,6 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             MongoDBContext.UpsertMerchantDailyActivity(merchantId, xctPostingDate, transactions);
 
             return xctCntToGenerate;
-        }
-
-        public static int GenerateSampleXcts(int merchantId, DateTime xctPostingDate)
-        {
-            int xctsGenerated = 0;
-
-            xctsGenerated += GenerateSalesXcts(merchantId, xctPostingDate);
-            xctsGenerated += GenerateRefundXcts(merchantId, xctPostingDate);
-            xctsGenerated += GenerateChargebacksXcts(merchantId, xctPostingDate);
-
-            return xctsGenerated;
         }
 
         #endregion
@@ -813,21 +923,16 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                     1, new MerchantMBE()
                         {
                             merchant_id = 1,
-                            merchant_name = @"Tom's Deli",
-                            //primary_contact = new ContactMBE()
-                            //{
-                            //    first_name = @"Tom",
-                            //    last_name = @"Bruns",
-                            //    phone_no = GeneralConstants.TOMS_PHONE_NO,
-                            //    email_address = @"xtobr39@hotmail.com",
-                            //    local_time_zone = @"EST"
-                            //},
+                            merchant_name = @"Blisks R US",
                             setup_options = new SetupOptionsMBE()
                             {
                                 is_host_data_capture_enabled = true,
                                 auto_close_hh_mm = new TimeSpan(19, 0, 0),
                                 is_fast_funding_enabled = true,
-                                debit_card_no = @"1234567890123401"
+                                debit_card_no = @"1234567890123401",
+                                supports_cnp_xcts = false,
+                                supports_cp_xcts = true,
+                                supports_returns_xcts = false
                             },
                             terminals = new List<TerminalMBE>()
                             {
@@ -841,20 +946,15 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         {
                             merchant_id = 2,
                             merchant_name = @"Marcos Canoe Livery",
-                            //primary_contact = new ContactMBE()
-                            //{
-                            //    first_name = @"Marco",
-                            //    last_name = @"Fernandes",
-                            //    phone_no = GeneralConstants.MARCOS_PHONE_NO,
-                            //    email_address = @"Marco.Fernandes@worldpay.com",
-                            //    local_time_zone = @"EST"
-                            //},
                             setup_options = new SetupOptionsMBE()
                             {
                                 is_host_data_capture_enabled = true,
                                 auto_close_hh_mm = new TimeSpan(19, 0, 0),
                                 is_fast_funding_enabled = true,
-                                debit_card_no = @"1234567890126702"
+                                debit_card_no = @"1234567890126702",
+                                supports_cnp_xcts = true,
+                                supports_cp_xcts = true,
+                                supports_returns_xcts = true
                             },
                             terminals = new List<TerminalMBE>()
                             {
@@ -868,20 +968,15 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         {
                             merchant_id = 3,
                             merchant_name = @"Dusty's Cookies",
-                            //primary_contact = new ContactMBE()
-                            //{
-                            //    first_name = @"Dusty",
-                            //    last_name = @"Gomez",
-                            //    phone_no = GeneralConstants.DUSTYS_PHONE_NO,
-                            //    email_address = @"Dusty.Gomez@worldpay.com",
-                            //    local_time_zone = @"EST"
-                            //},
                             setup_options = new SetupOptionsMBE()
                             {
                                 is_host_data_capture_enabled = true,
                                 auto_close_hh_mm = new TimeSpan(19, 0, 0),
                                 is_fast_funding_enabled = true,
-                                debit_card_no = @"1234567890125203"
+                                debit_card_no = @"1234567890125203",
+                                supports_cnp_xcts = true,
+                                supports_cp_xcts = true,
+                                supports_returns_xcts = false
                             },
                             terminals = new List<TerminalMBE>()
                             {
@@ -895,20 +990,15 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         {
                             merchant_id = 4,
                             merchant_name = @"Byrne's Bar & Grill",
-                            //primary_contact = new ContactMBE()
-                            //{
-                            //    first_name = @"Josh",
-                            //    last_name = @"Byrne",
-                            //    phone_no = GeneralConstants.JOSHS_PHONE_NO,
-                            //    email_address = @"Joshua.Byrne@worldpay.com",
-                            //    local_time_zone = @"EST"
-                            //},
                             setup_options = new SetupOptionsMBE()
                             {
                                 is_host_data_capture_enabled = true,
                                 auto_close_hh_mm = new TimeSpan(19, 0, 0),
                                 is_fast_funding_enabled = true,
-                                debit_card_no = @"1234567890122704"
+                                debit_card_no = @"1234567890122704",
+                                supports_cnp_xcts = false,
+                                supports_cp_xcts = true,
+                                supports_returns_xcts = true
                             },
                             terminals = new List<TerminalMBE>()
                             {
@@ -922,20 +1012,15 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         {
                             merchant_id = 5,
                             merchant_name = @"Dr. Boeding",
-                            //primary_contact = new ContactMBE()
-                            //{
-                            //    first_name = @"Alex",
-                            //    last_name = @"Boeding",
-                            //    phone_no = GeneralConstants.ALEXS_PHONE_NO,
-                            //    email_address = @"Axex.Boeding@worldpay.com",
-                            //    local_time_zone = @"EST"
-                            //},
                             setup_options = new SetupOptionsMBE()
                             {
                                 is_host_data_capture_enabled = true,
                                 auto_close_hh_mm = new TimeSpan(19, 0, 0),
                                 is_fast_funding_enabled = true,
-                                debit_card_no = @"1234567890129905"
+                                debit_card_no = @"1234567890129905",
+                                supports_cnp_xcts = true,
+                                supports_cp_xcts = true,
+                                supports_returns_xcts = false
                             },
                             terminals = new List<TerminalMBE>()
                             {
@@ -949,20 +1034,15 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                     {
                         merchant_id = 6,
                         merchant_name = @"Pallavi's Robot Hobby Shop",
-                        //primary_contact = new ContactMBE()
-                        //{
-                        //    first_name = @"Pallavi",
-                        //    last_name = @"TBD",
-                        //    phone_no = GeneralConstants.PALLAVI_PHONE_NO,
-                        //    email_address = @"Pallavi.TBD@worldpay.com",
-                        //    local_time_zone = @"EST"
-                        //},
                         setup_options = new SetupOptionsMBE()
                         {
                             is_host_data_capture_enabled = true,
                             auto_close_hh_mm = new TimeSpan(19, 0, 0),
                             is_fast_funding_enabled = true,
-                            debit_card_no = @"1234567890121106"
+                            debit_card_no = @"1234567890121106",
+                            supports_cnp_xcts = true,
+                            supports_cp_xcts = true,
+                            supports_returns_xcts = true
                         },
                         terminals = new List<TerminalMBE>()
                         {
@@ -976,20 +1056,15 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                     {
                         merchant_id = 7,
                         merchant_name = @"Joe's Java Hut",
-                        //primary_contact = new ContactMBE()
-                        //{
-                        //    first_name = @"Joe",
-                        //    last_name = @"Pellar",
-                        //    phone_no = GeneralConstants.JOES_PHONE_NO,
-                        //    email_address = @"Joe.Pellar@worldpay.com",
-                        //    local_time_zone = @"CST"
-                        //},
                         setup_options = new SetupOptionsMBE()
                         {
                             is_host_data_capture_enabled = true,
                             auto_close_hh_mm = new TimeSpan(19, 0, 0),
                             is_fast_funding_enabled = true,
-                            debit_card_no = @"1234567890121107"
+                            debit_card_no = @"1234567890121107",
+                            supports_cnp_xcts = false,
+                            supports_cp_xcts = true,
+                            supports_returns_xcts = false
                         },
                         terminals = new List<TerminalMBE>()
                         {
@@ -1003,20 +1078,15 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                     {
                         merchant_id = 8,
                         merchant_name = @"Jake's State Farm",
-                        //primary_contact = new ContactMBE()
-                        //{
-                        //    first_name = @"Jianan",
-                        //    last_name = @"Hou",
-                        //    phone_no = GeneralConstants.JAKES_PHONE_NO,
-                        //    email_address = @"Jianan.Hou@worldpay.com",
-                        //    local_time_zone = @"EST"
-                        //},
                         setup_options = new SetupOptionsMBE()
                         {
                             is_host_data_capture_enabled = true,
                             auto_close_hh_mm = new TimeSpan(19, 0, 0),
                             is_fast_funding_enabled = true,
-                            debit_card_no = @"1234567890122208"
+                            debit_card_no = @"1234567890122208",
+                            supports_cnp_xcts = true,
+                            supports_cp_xcts = true,
+                            supports_returns_xcts = false
                         },
                         terminals = new List<TerminalMBE>()
                         {
@@ -1030,20 +1100,15 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                     {
                         merchant_id = 9,
                         merchant_name = @"Jon's Hardware Store",
-                        //primary_contact = new ContactMBE()
-                        //{
-                        //    first_name = @"Jon",
-                        //    last_name = @"Pollock",
-                        //    phone_no = @"+16153309751",
-                        //    email_address = @"Jon.Pollock@worldpay.com",
-                        //    local_time_zone = @"EST"
-                        //},
                         setup_options = new SetupOptionsMBE()
                         {
                             is_host_data_capture_enabled = true,
                             auto_close_hh_mm = new TimeSpan(19, 0, 0),
                             is_fast_funding_enabled = true,
-                            debit_card_no = @"1234567890122208"
+                            debit_card_no = @"1234567890122208",
+                            supports_cnp_xcts = false,
+                            supports_cp_xcts = true,
+                            supports_returns_xcts = false
                         },
                         terminals = new List<TerminalMBE>()
                         {
