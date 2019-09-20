@@ -9,11 +9,14 @@ namespace WP.Learning.BizLogic.Shared
     /// </summary>
     public static class GeneralConstants
     {
-        public static string APP_NAME = @"IQ Buzz";
+        public static string APP_NAME = @"iQBuzz";
         public static string TWILIO_PHONE_NO = @"+15138541944";
+
+        public static string WORLDPAY_CONTACT_CENTER_PHONE_NO = @"(866) 622-2390";
 
         //public static string FAF_URL = @"http://www.bing.com";
         public static string CFG_URL = @"http://www.accessmyiq.com/iqbuzz";
+        public static string IQ_URL = @"http://www.accessmyiq.com";
         public static string CHARGEBACK_URL = @"http://www.accessmyiq.com/chargebacks";
 
         public static string TOMS_PHONE_NO = @"+15134986016";

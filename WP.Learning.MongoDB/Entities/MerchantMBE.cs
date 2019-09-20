@@ -46,9 +46,11 @@ namespace WP.Learning.MongoDB.Entities
         public bool is_fast_funding_enabled { get; set; }
         public string debit_card_no { get; set; }
 
-        public bool supports_cp_xcts { get; set; }
-        public bool supports_cnp_xcts { get; set; }
-        public bool supports_returns_xcts { get; set; }
+        public bool supports_cp_sales_xcts { get; set; }
+        public bool supports_cnp_sales_xcts { get; set; }
+        public bool supports_cp_returns_xcts { get; set; }
+
+        public bool supports_cnp_returns_xcts { get; set; }
     }
     
     // defines the terminals configured for a merchant

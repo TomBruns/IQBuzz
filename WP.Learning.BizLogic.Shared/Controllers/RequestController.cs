@@ -39,21 +39,17 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             }
 
             DateTime currentUTCDT = DateTime.Now.ToUniversalTime();
-            //DateTime currentUserDT = DateTimeUtilities.CovertToUserLocalDT(currentUTCDT, user.local_time_zone);
-            //string currentUserTimeText = $"{currentUserDT.ToString("h:mm tt")} {user.local_time_zone}";
 
             // ===================================================
             // Everything below here is supported before you have accepted the T&C
             // ===================================================
             if (requestBody == @"join" || requestBody == @"start")    // user requests to join
             {
-                responseMsgs.Add(UserController.BuildWelcomeMessage(user));
+                responseMsgs.Add(UserController.BuildJoinMessage(user));
             }
             else if (requestBody == @"yes")     // confirm & accept welcome msg
             { 
                 responseMsgs.Add(UserController.StoreAcceptWelcomeMessageResponse(user.user_id, true));
-
-                responseMsgs.Add(BuildHelpMessage());
             }
             else if (!user.has_accepted_welcome_agreement)
             {
@@ -65,22 +61,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             // =====================================================
             else if (requestBody == @"user" || requestBody == @"whoami")    // display current user info
             {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine($"Hi {user.first_name} {user.last_name}!");
-                sb.AppendLine($"User ID: {user.user_id}");
-                sb.AppendLine($"Accepted EULA?: {user.has_accepted_welcome_agreement}");
-                sb.AppendLine($"Phone No: {user.phone_no}");
-                sb.AppendLine($"Timezone: {user.local_time_zone}");
-                sb.AppendLine($"Prefered Language: {LanguageType.GetDescription(user.language_code)}");
-                sb.AppendLine($"  Hint: To chg Buzz's language text lang?");
-                sb.AppendLine($"--------------------------------------");
-                sb.AppendLine($"Locations:");
-                foreach (var merchant in user.Merchants)
-                {
-                    sb.AppendLine($"  [{merchant.merchant_id}] {merchant.merchant_name}");
-                }
-
-                responseMsgs.Add(sb.ToString());
+                responseMsgs.Add(UserController.BuildUserInfoMsg(user));
             }
             else if (requestBody == @"lang?" || requestBody == @"lang")
             {
@@ -231,10 +212,11 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             return responseMsgs;
         }
 
-        private static string BuildHelpMessage()
+        public static string BuildHelpMessage()
         {
             StringBuilder helpMsg = new StringBuilder();
 
+            /*
             helpMsg.AppendLine("");
             helpMsg.AppendLine("Here is a list of the commands that I understand:");
             helpMsg.AppendLine("--------------------------------------------------------");
@@ -252,6 +234,18 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             helpMsg.AppendLine("User:  Account Details");
             helpMsg.AppendLine("");
             helpMsg.AppendLine("To see this list again at any time, text help? or ??? back to me.");
+            */
+
+            helpMsg.AppendLine("--------------------------------------------------------");
+            helpMsg.AppendLine("SUMMARY: today's summary of all stores and online activity:");
+            helpMsg.AppendLine("SALES: today's sales figures by store and online:");
+            helpMsg.AppendLine("RETURNS: today's returns by store and online:");
+            helpMsg.AppendLine("CBACK: pending Chargebacks:");
+            helpMsg.AppendLine("USER: your account details, including language preference:");
+            helpMsg.AppendLine("SETTINGS: configure alert preferences:");
+            helpMsg.AppendLine("JOIN: re-send the welcome message:");
+            helpMsg.AppendLine($"STOP: Unsubscribe from {GeneralConstants.APP_NAME} (I hope you won't!):");
+            helpMsg.AppendLine("HELP?: displays this list of commands:");
 
             return (helpMsg.ToString());
         }

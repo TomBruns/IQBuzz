@@ -27,6 +27,7 @@ namespace WP.Learning.BizLogic.Shared.Entities
         public static LanguageType PORTUGUESE = new LanguageType("pt");
         public static LanguageType GERMAN = new LanguageType("de");
         public static LanguageType HINDI = new LanguageType("hi");
+        public static LanguageType SWEDISH = new LanguageType("sv");
 
         public static string GetDescription(string languageType)
         {
@@ -44,6 +45,8 @@ namespace WP.Learning.BizLogic.Shared.Entities
                     return @"German (de)";
                 case @"hi":
                     return @"Hindi (hi)";
+                case @"sv":
+                    return @"Swedish (sv)";
                 default:
                     return $"Unknown ({languageType})";
             }
@@ -61,6 +64,8 @@ namespace WP.Learning.BizLogic.Shared.Entities
             sb.AppendLine($"{cmd}-pt  for Portuguese");
             sb.AppendLine($"{cmd}-de  for German");
             sb.AppendLine($"{cmd}-hi  for Hindi");
+            sb.AppendLine($"{cmd}-hi  for Hindi");
+            sb.AppendLine($"{cmd}-sv  for Swedish");
 
             return sb.ToString();
         }

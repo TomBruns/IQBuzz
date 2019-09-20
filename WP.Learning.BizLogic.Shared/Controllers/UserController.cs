@@ -93,8 +93,29 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             CreateUser(user, isDeleteIfExists);
         }
 
-        #endregion
+        public static string BuildUserInfoMsg(IQBuzzUserBE user)
+        {
+            StringBuilder returnMsg = new StringBuilder();
 
+            returnMsg.AppendLine($"Hi {user.first_name}! Here is your {GeneralConstants.APP_NAME} user information:");
+            returnMsg.AppendLine($"User ID: {user.user_id}");
+            returnMsg.AppendLine($"Current Status: {user.has_accepted_welcome_agreement}");
+            returnMsg.AppendLine($"Phone No: {user.phone_no}");
+            returnMsg.AppendLine($"Timezone: {user.local_time_zone}");
+            returnMsg.AppendLine($"Prefered Language: {LanguageType.GetDescription(user.language_code)}");
+            returnMsg.AppendLine($"  Hint: To chg your language text lang? back to me");
+            returnMsg.AppendLine($"--------------------------------------");
+            returnMsg.AppendLine($"You are currently receiving information for the following Businesses:");
+            foreach (var merchant in user.Merchants)
+            {
+                returnMsg.AppendLine($"  Store: [MID: {merchant.merchant_id}] {merchant.merchant_name}");
+            }
+
+            return returnMsg.ToString();
+        }
+
+        #endregion
+       
         #region === User Activity ================================================================
 
         public static void LogUserActivity(UserActivityMBE userActivity)
@@ -181,26 +202,34 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         /// <returns></returns>
         public static string BuildWelcomeMessage(IQBuzzUserBE iqBuzzUser)
         {
-            string welcomeMsg = string.Empty;
+            StringBuilder welcomeMsg = new StringBuilder();
+            StringBuilder merchantList = new StringBuilder();
+            MerchantMBE merchant = null;
 
-            var merchant = MongoDBContext.FindMerchantById(iqBuzzUser.merchant_ids.First());
+
+            foreach(var merchantId in iqBuzzUser.merchant_ids)
+            {
+                merchant = MongoDBContext.FindMerchantById(merchantId);
+                merchantList.AppendLine($" MID: {merchant.merchant_id} ({merchant.merchant_name})");
+            }
+
+            welcomeMsg.AppendLine($"Hello, {iqBuzzUser.FullName}!");
+            welcomeMsg.AppendLine();
+            welcomeMsg.AppendLine($"On behalf of FIS, thank you for trusting us with payment acceptance for");
+            welcomeMsg.AppendLine(merchantList.ToString());
+            //welcomeMsg.AppendLine();
+            welcomeMsg.AppendLine("My name is Buzz, and I’ll keep you informed of key activity on your account.");
 
             if (!iqBuzzUser.has_accepted_welcome_agreement)
             {
-                welcomeMsg = $"Hello, {iqBuzzUser.FullName}!\n"
-                    + $"On behalf of FIS, thank you for trusting us with {merchant.merchant_name}'s payment acceptance.\n"
-                    + "My name is Buzz, and I’ll keep you informed of key activity on your account.\n"
-                    + "To confirm your subscription, reply YES to this message.";
+                welcomeMsg.AppendLine("To confirm your subscription, reply YES to this message.");
             }
             else
             {
-                welcomeMsg = $"Hello, {iqBuzzUser.FullName}!\n"
-                    + $"On behalf of FIS, thank you for trusting us with {merchant.merchant_name}'s payment acceptance.\n"
-                    + "My name is Buzz, and I’ll keep you informed of key activity on your account.\n"
-                    + "You have already confirmed enrollment.";
+                welcomeMsg.AppendLine("You have already confirmed enrollment.");
             }
 
-            return welcomeMsg;
+            return welcomeMsg.ToString();
         }
 
         /// <summary>
@@ -217,6 +246,24 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         }
 
         /// <summary>
+        /// Builds the join message.
+        /// </summary>
+        /// <param name="iqBuzzUser">The iq buzz user.</param>
+        /// <returns>System.String.</returns>
+        public static string BuildJoinMessage(IQBuzzUserBE iqBuzzUser)
+        {
+            StringBuilder joinMsg = new StringBuilder();
+
+            var merchant = MongoDBContext.FindMerchantById(iqBuzzUser.merchant_ids.First());
+
+            joinMsg.AppendLine($"Welcome back, {iqBuzzUser.first_name}! I will be glad to help keep you informed of your processing activity going forward. I'll give you key information, and help you find more information when you need it!");
+            joinMsg.AppendLine($"As a reminder, here is a list of commands that I understand:");
+            joinMsg.AppendLine(RequestController.BuildHelpMessage());
+
+            return joinMsg.ToString();
+        }
+
+        /// <summary>
         /// Process Welcome Acceptance reponse
         /// </summary>
         /// <param name="userId"></param>
@@ -227,12 +274,12 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             // get merchant metadata (MDB ??)
             var user = MongoDBContext.FindIQBuzzUser(userId);
 
-            string returnMsg = string.Empty;
+            StringBuilder returnMsg = new StringBuilder();
 
             // they have already accepted
             if (user.has_accepted_welcome_agreement)
             {
-                returnMsg = "Thanks for replying, you have already accepted!, Hint: You can always text HELP? or ??? to see a list of commands.";
+                returnMsg.AppendLine($"Thanks for replying, you have already accepted!, Hint: You can always text HELP? or ??? to see a list of commands.");
             }
             // they are accepting or declining now
             else if (isAccepted)
@@ -240,14 +287,22 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 user.has_accepted_welcome_agreement = isAccepted;
                 MongoDBContext.UpdateIQBUzzUser(user);
 
-                returnMsg = isAccepted
-                        ? $"Great! Welcome to iQBuzz!\n"
-                            + $"If you add my number: {GeneralConstants.TWILIO_PHONE_NO} to your contact book, you’ll always know it’s me when I message you.\n"
-                            + "And then you can tell your phone's voice assistant what you need my help with!\n"
-                        : "We are sorry you choose not to join, text JOIN at any time to have another opportunity to accept.";
+                returnMsg.AppendLine($"Great! Welcome to {GeneralConstants.APP_NAME}!");
+                returnMsg.AppendLine($"If you add my number: {GeneralConstants.TWILIO_PHONE_NO} to your contact list, you’ll always know it’s me when I message you.");
+                returnMsg.AppendLine("And then you can tell your phone's voice assistant what you need my help with!");
+                returnMsg.AppendLine();
+                returnMsg.AppendLine("I will automatically notify you when we receive your daily batch(es) or when we close them for you (if you're enrolled in Host Data Capture). I'll also let you know when we finish processing your daily settlement, so you'll know everything is on track!");
+                returnMsg.AppendLine();
+                returnMsg.AppendLine("In addition, here is a list of commands you can text me anytime you need information:");
+                returnMsg.AppendLine(RequestController.BuildHelpMessage());
+            }
+            else
+            {
+                returnMsg.AppendLine("OK, I won't send you any messages until you tell me to. To do that, simply text JOIN to my number again!");
+                returnMsg.AppendLine($"If you have questions about iQBuzz, please give us a call anytime! {GeneralConstants.WORLDPAY_CONTACT_CENTER_PHONE_NO}");
             }
 
-            return returnMsg;
+            return returnMsg.ToString(); ;
         }
 
         // Command: Unjoin
@@ -323,7 +378,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"xtobr39@hotmail.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
-                        merchant_ids = new List<int>() { 1 },
+                        merchant_ids = new List<int>() { 1, 2 },
                         language_code = LanguageType.ENGLISH.ToString()
                     }
                 },
@@ -337,7 +392,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Marco.Fernandes@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
-                        merchant_ids = new List<int>() { 2 },
+                        merchant_ids = new List<int>() { 1, 2 },
                         language_code = LanguageType.ENGLISH.ToString()
                     }
                 },

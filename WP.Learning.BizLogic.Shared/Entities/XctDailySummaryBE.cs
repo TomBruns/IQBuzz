@@ -10,17 +10,32 @@ namespace WP.Learning.BizLogic.Shared.Entities
     /// </summary>
     public class XctDailySummaryBE
     {
-        public List<XctTypeDailySummaryBE> CPSalesSummary { get; set; }
+        public XctDailySummaryBE()
+        {
+            this.CPSalesSummary = new XctTypeDailySummaryBE();
+            this.CNPSalesSummary = new XctTypeDailySummaryBE();
+            this.CPReturnsSummary = new XctTypeDailySummaryBE();
+            this.CNPReturnsSummary = new XctTypeDailySummaryBE();
+            this.ChargebacksSummary = new XctTypeDailySummaryBE();
+        }
 
-        public List<XctTypeDailySummaryBE> CNPSalesSummary { get; set; }
+        public XctTypeDailySummaryBE CPSalesSummary { get; set; }
 
-        public List<XctTypeDailySummaryBE> ReturnsSummary { get; set; }
+        public XctTypeDailySummaryBE CNPSalesSummary { get; set; }
 
-        public List<XctTypeDailySummaryBE> ChargebacksSummary { get; set; }
+        public XctTypeDailySummaryBE CPReturnsSummary { get; set; }
+
+        public XctTypeDailySummaryBE CNPReturnsSummary { get; set; }
+
+        public XctTypeDailySummaryBE ChargebacksSummary { get; set; }
     }
 
     public class XctTypeDailySummaryBE
     {
+        public int MerchantID { get; set; }
+
+        public string MerchantName { get; set; }
+
         public TRANSACTION_TYPE XctType { get; set; }
 
         public int SuccessXctCount { get; set; }
@@ -43,8 +58,10 @@ namespace WP.Learning.BizLogic.Shared.Entities
                         return @"Online Sales";
                     case TRANSACTION_TYPE.cp_sale:
                         return @"In-Store Sales";
-                    case TRANSACTION_TYPE.credit_return:
-                        return @"Returns";
+                    case TRANSACTION_TYPE.cp_return:
+                        return @"In-store Returns";
+                    case TRANSACTION_TYPE.cnp_return:
+                        return @"Online Returns";
                     default:
                         return @"Unknown";
                 }

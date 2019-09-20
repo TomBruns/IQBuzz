@@ -39,8 +39,9 @@ namespace WP.Learning.BackOffice.Console
             System.Console.WriteLine("2.02   Generate Sample Xcts");
             System.Console.WriteLine("2.03   Generate CP Purchases");
             System.Console.WriteLine("2.04   Generate CNP Purchases");
-            System.Console.WriteLine("2.05   Generate Returns");
-            System.Console.WriteLine("2.06   Generate Chargebacks");
+            System.Console.WriteLine("2.05   Generate CP Returns");
+            System.Console.WriteLine("2.06   Generate CNP Returns");
+            System.Console.WriteLine("2.07   Generate Chargebacks");
             //System.Console.WriteLine("2.6   Fire All Terminals Closed Event");
             //System.Console.WriteLine("2.7   Fire Closed Event for all Merchants");
             System.Console.WriteLine("");
@@ -90,8 +91,7 @@ namespace WP.Learning.BackOffice.Console
 
             int merchantId = 0;
             int userId = 0;
-            DateTime today = DateTime.Today.ToUniversalTime();
-            DateTime xctPostingDate = new DateTime(today.Year, today.Month, today.Day, 0, 0, 0, DateTimeKind.Utc);
+            DateTime nowUTC = DateTime.Today.ToUniversalTime();
             string response = string.Empty;
 
             switch (selection)
@@ -108,37 +108,50 @@ namespace WP.Learning.BackOffice.Console
                 case 2.01M:  // Clear Xcts for Merchant N
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
-                    MerchantController.ResetAllXctsForMerchantDate(merchantId, DateTime.Today);
+                    if (merchantId == 0)
+                    {
+                        MerchantController.DeleteXctsForAllMerchants();
+                    }
+                    else
+                    {
+                        MerchantController.DeleteAllMerchantXctsForDate(merchantId, DateTime.Today);
+                    }
                     break;
 
                 case 2.02M:  // Gen All Xcts for Merchant N
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
-                    MerchantController.GenerateSampleXcts(merchantId, DateTime.Today);
+                    MerchantController.GenerateSampleXcts(merchantId, nowUTC.Date);
                     break;
 
                 case 2.03M:  // Gen CP Purchases Xcts for Merchant N
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
-                    MerchantController.GenerateSalesXcts(merchantId, DateTime.Today, TRANSACTION_TYPE.cp_sale);
+                    MerchantController.GenerateSalesXcts(merchantId, nowUTC.Date, TRANSACTION_TYPE.cp_sale);
                     break;
 
                 case 2.04M:  // Gen CNP Purchases Xcts for Merchant N
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
-                    MerchantController.GenerateSalesXcts(merchantId, DateTime.Today, TRANSACTION_TYPE.cnp_sale);
+                    MerchantController.GenerateSalesXcts(merchantId, nowUTC.Date, TRANSACTION_TYPE.cnp_sale);
                     break;
 
                 case 2.05M:  // Gen refunds Xcts for Merchant N
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
-                    MerchantController.GenerateRefundXcts(merchantId, DateTime.Today);
+                    MerchantController.GenerateReturnXcts(merchantId, nowUTC.Date, TRANSACTION_TYPE.cp_return);
                     break;
 
-                case 2.06M:  // Generate chargebacks Xcts for Merchant N
+                case 2.06M:  // Gen refunds Xcts for Merchant N
                     System.Console.Write("MerchantId:> ");
                     merchantId = Int32.Parse(System.Console.ReadLine());
-                    MerchantController.GenerateChargebacksXcts(merchantId, DateTime.Today);
+                    MerchantController.GenerateReturnXcts(merchantId, nowUTC.Date, TRANSACTION_TYPE.cnp_return);
+                    break;
+
+                case 2.07M:  // Generate chargebacks Xcts for Merchant N
+                    System.Console.Write("MerchantId:> ");
+                    merchantId = Int32.Parse(System.Console.ReadLine());
+                    MerchantController.GenerateChargebacksXcts(merchantId, nowUTC.Date);
                     break;
 
                 //case 2.5M:  // Fire all terminals closed event
