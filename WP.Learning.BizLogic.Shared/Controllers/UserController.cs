@@ -250,15 +250,18 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         /// </summary>
         /// <param name="iqBuzzUser">The iq buzz user.</param>
         /// <returns>System.String.</returns>
-        public static string BuildJoinMessage(IQBuzzUserBE iqBuzzUser)
+        public static string BuildJoinMessage(int userId)
         {
+            var user = MongoDBContext.FindIQBuzzUser(userId);
+
             StringBuilder joinMsg = new StringBuilder();
 
-            var merchant = MongoDBContext.FindMerchantById(iqBuzzUser.merchant_ids.First());
-
-            joinMsg.AppendLine($"Welcome back, {iqBuzzUser.first_name}! I will be glad to help keep you informed of your processing activity going forward. I'll give you key information, and help you find more information when you need it!");
+            joinMsg.AppendLine($"Welcome back, {user.first_name}! I will be glad to help keep you informed of your processing activity going forward. I'll give you key information, and help you find more information when you need it!");
             joinMsg.AppendLine($"As a reminder, here is a list of commands that I understand:");
             joinMsg.AppendLine(RequestController.BuildHelpMessage());
+
+            user.has_accepted_welcome_agreement = true;
+            MongoDBContext.UpdateIQBUzzUser(user);
 
             return joinMsg.ToString();
         }

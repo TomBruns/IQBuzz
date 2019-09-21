@@ -45,7 +45,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             // ===================================================
             if (requestBody == @"join" || requestBody == @"start")    // user requests to join
             {
-                responseMsgs.Add(UserController.BuildJoinMessage(user));
+                responseMsgs.Add(UserController.BuildJoinMessage(user.user_id));
             }
             else if (requestBody == @"yes")     // confirm & accept welcome msg
             { 
@@ -53,7 +53,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             }
             else if (!user.has_accepted_welcome_agreement)
             {
-                responseMsgs.Add($"You must accept the Terms&Conditions before using {GeneralConstants.APP_NAME}, Text join to do that.");
+                responseMsgs.Add($"Please text JOIN to allow {GeneralConstants.APP_NAME} to talk to you.");
             }
 
             // =====================================================
