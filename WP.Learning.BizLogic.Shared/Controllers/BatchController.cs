@@ -33,7 +33,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
 
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine($"We've received your transaction batch and are processing it for settlement. We'll let you know when we're done.");
+            sb.AppendLine($"We've received your transaction batch and are processing it for settlement. I'll let you know when we're done.");
             sb.AppendLine($"The batch reference number is [{GenBatchNo()}]");
 
             return sb.ToString();
@@ -56,7 +56,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
 
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine($"We've closed your {merchant.setup_options.auto_close_hh_mm} batch and we're processing it for settlement. We will let you know when we're done!");
+            sb.AppendLine($"We have closed your {merchant.setup_options.auto_close_hh_mm} batch and we're processing it for settlement. I'll let you know when we're done!");
             sb.AppendLine($"The batch reference number is [{GenBatchNo()}]");
             
             return sb.ToString();

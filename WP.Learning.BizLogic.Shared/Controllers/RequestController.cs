@@ -256,26 +256,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         {
             StringBuilder helpMsg = new StringBuilder();
 
-            /*
-            helpMsg.AppendLine("");
-            helpMsg.AppendLine("Here is a list of the commands that I understand:");
             helpMsg.AppendLine("--------------------------------------------------------");
-            helpMsg.AppendLine("summary or summ:  Today's Summary");
-            helpMsg.AppendLine("sales:  Today's Sales");
-            helpMsg.AppendLine("cback:  Pending Chargebacks");
-            helpMsg.AppendLine("returns or ret:  Today's Returns");
-            helpMsg.AppendLine("stop:  Unsubscribe");
-            helpMsg.AppendLine("faf:  Sign-up for Fast Access");
-            helpMsg.AppendLine("");
-            helpMsg.AppendLine("help?:  this list");
-            helpMsg.AppendLine("join:  resend welcome message");
-            helpMsg.AppendLine("Settings:  view/update alert settings");
-            helpMsg.AppendLine("User:  Account Details");
-            helpMsg.AppendLine("User:  Account Details");
-            helpMsg.AppendLine("");
-            helpMsg.AppendLine("To see this list again at any time, text help? or ??? back to me.");
-            */
-
+            helpMsg.AppendLine("Hint: These are not case sensitive");
             helpMsg.AppendLine("--------------------------------------------------------");
             helpMsg.AppendLine("SUMMARY: today's summary of all stores and online activity:");
             helpMsg.AppendLine("SALES: today's sales figures by store and online:");
