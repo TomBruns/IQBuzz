@@ -54,6 +54,10 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             {
                 responseMsgs.Add(UserController.BuildJoinMessage(user.user_id));
             }
+            else if (requestBody == @"welcome")     // send welcome msg
+            {
+                UserController.SendWelcomeMessage(user.user_id);
+            }
             else if (requestBody == @"yes")     // confirm & accept welcome msg
             { 
                 responseMsgs.Add(UserController.StoreAcceptWelcomeMessageResponse(user.user_id, true));
@@ -227,6 +231,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 helpMsg.AppendLine("batch-ok: send received ok msg");
                 helpMsg.AppendLine("batch-err: send received err msg");
                 helpMsg.AppendLine("batch-auto: set auto close");
+                helpMsg.AppendLine("welcome: set welcome msg");
 
                 responseMsgs.Add(helpMsg.ToString());
             }
