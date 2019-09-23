@@ -66,6 +66,11 @@ namespace WP.Learning.BackOffice.Console
             System.Console.WriteLine("3.24  genxcts");
             System.Console.WriteLine("3.25  usage");
             System.Console.WriteLine("");
+            System.Console.WriteLine("3.31  batch-miss");
+            System.Console.WriteLine("3.32  batch-ok");
+            System.Console.WriteLine("3.33  batch-err");
+            System.Console.WriteLine("3.34  batch-auto");
+            System.Console.WriteLine("");
             System.Console.ForegroundColor = ConsoleColor.Magenta;
             System.Console.WriteLine("=== Merchant Admin ======================");
             System.Console.ForegroundColor = defaultColor;
@@ -80,6 +85,14 @@ namespace WP.Learning.BackOffice.Console
             System.Console.WriteLine("5.1   Load User");
             System.Console.WriteLine("5.2   Load All Users");
             System.Console.WriteLine("5.3   Reload All Users");
+            System.Console.WriteLine("");
+            System.Console.ForegroundColor = ConsoleColor.Magenta;
+            System.Console.WriteLine("=== Batch Commands ===========================");
+            System.Console.ForegroundColor = defaultColor;
+            System.Console.WriteLine("6.1   Send batch-miss");
+            System.Console.WriteLine("6.2   Send batch-ok");
+            System.Console.WriteLine("6.3   Send batch-err");
+            System.Console.WriteLine("6.4   Send batch-auto");
             System.Console.WriteLine("");
             System.Console.WriteLine();
             System.Console.Write("Enter # or 0 to Exit");
@@ -232,6 +245,21 @@ namespace WP.Learning.BackOffice.Console
                     ProcessUserCommand(@"usage");
                     break;
 
+                case 3.31M:  // usage
+                    ProcessUserCommand(@"batch-miss");
+                    break;
+
+                case 3.32M:  // usage
+                    ProcessUserCommand(@"batch-ok");
+                    break;
+
+                case 3.33M:  // usage
+                    ProcessUserCommand(@"batch-err");
+                    break;
+
+                case 3.34M:  // usage
+                    ProcessUserCommand(@"batch-auto");
+                    break;
                 #endregion
 
                 #region === Merchants =========================================================
@@ -272,6 +300,33 @@ namespace WP.Learning.BackOffice.Console
 
                 case 5.3M:  // Reload All Users
                     UserController.CreateAllUsers(true);
+                    break;
+
+                #endregion
+
+                #region === Users =========================================================
+                case 6.1M:  // Load User
+                    System.Console.Write("UserId:> ");
+                    userId = Int32.Parse(System.Console.ReadLine());
+                    BatchController.SendBatchMissingMessage(userId);
+                    break;
+
+                case 6.2M:  // Load All Users
+                    System.Console.Write("UserId:> ");
+                    userId = Int32.Parse(System.Console.ReadLine());
+                    BatchController.SendBatchReceivedOkMessage(userId);
+                    break;
+
+                case 6.3M:  // Reload All Users
+                    System.Console.Write("UserId:> ");
+                    userId = Int32.Parse(System.Console.ReadLine());
+                    BatchController.SendBatchReceivedErrorMessage(userId);
+                    break;
+
+                case 6.4M:  // Reload All Users
+                    System.Console.Write("UserId:> ");
+                    userId = Int32.Parse(System.Console.ReadLine());
+                    BatchController.SendBatchAutoCloseMessage(userId);
                     break;
 
                 #endregion

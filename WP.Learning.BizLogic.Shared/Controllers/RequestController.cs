@@ -38,7 +38,14 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 return responseMsgs;
             }
 
+            // grab the current time in UTC
             DateTime currentUTCDT = DateTime.Now.ToUniversalTime();
+
+            // optionally translate the reqeust
+            if((requestBody != @"reset") && (user.language_code != LanguageType.ENGLISH.ToString()))
+            {
+                requestBody = TranslateRequest(requestBody);
+            }
 
             // ===================================================
             // Everything below here is supported before you have accepted the T&C
@@ -75,6 +82,13 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 // refresh user to get updated language setting
                 user = UserController.FindIQBuzzUser(fromPhoneNo);
             }
+            else if (requestBody == @"reset")   // force back to english
+            {
+                responseMsgs.Add(UserController.SetUserLanguage(user.user_id, LanguageType.ENGLISH.ToString()));
+
+                // refresh user to get updated language setting
+                user = UserController.FindIQBuzzUser(fromPhoneNo);
+            }
             else if (requestBody == @"summary" || requestBody == @"summ")     // Summary for today
             {
                 responseMsgs.Add(MerchantController.BuildOverallSummaryMessage(user.merchant_ids, currentUTCDT.Date, user.local_time_zone));
@@ -103,6 +117,22 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             else if (requestBody == @"undo")    // undo faf request
             {
                 responseMsgs.Add(MerchantController.BuildUndoFAFMessage(user.merchant_ids[0]));
+            }
+            else if (requestBody == @"batch-miss")
+            {
+                responseMsgs.Add(BatchController.BuildBatchMissingMessage(user.user_id, user.merchant_ids[0]));
+            }
+            else if (requestBody == @"batch-ok")
+            {
+                responseMsgs.Add(BatchController.BuildBatchReceivedOkMessage(user.user_id, user.merchant_ids[0]));
+            }
+            else if (requestBody == @"batch-err")
+            {
+                responseMsgs.Add(BatchController.BuildBatchReceivedErrorMessage(user.user_id, user.merchant_ids[0]));
+            }
+            else if (requestBody == @"batch-auto")
+            {
+                responseMsgs.Add(BatchController.BuildBatchAutoCloseMessage(user.user_id, user.merchant_ids[0]));
             }
             else if (requestBody == @"unjoin")  // unjoin
             {
@@ -193,7 +223,10 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 helpMsg.AppendLine("ver: display software build d/t");
                 helpMsg.AppendLine("genxcts or gen: generate random xcts");
                 helpMsg.AppendLine("usage: display usage stats for last 5 days");
-                helpMsg.AppendLine("lang: set language code");
+                helpMsg.AppendLine("batch-miss: send missign batch msg");
+                helpMsg.AppendLine("batch-ok: send received ok msg");
+                helpMsg.AppendLine("batch-err: send received err msg");
+                helpMsg.AppendLine("batch-auto: set auto close");
 
                 responseMsgs.Add(helpMsg.ToString());
             }
@@ -210,6 +243,13 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             }
 
             return responseMsgs;
+        }
+
+        private static string TranslateRequest(string requestBody)
+        {
+            var translatedRequest = TranslationController.Translate(requestBody, LanguageType.ENGLISH.ToString());
+
+            return translatedRequest;
         }
 
         public static string BuildHelpMessage()
@@ -244,7 +284,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             helpMsg.AppendLine("USER: your account details, including language preference:");
             helpMsg.AppendLine("SETTINGS: configure alert preferences:");
             helpMsg.AppendLine("JOIN: re-send the welcome message:");
-            helpMsg.AppendLine($"STOP: Unsubscribe from {GeneralConstants.APP_NAME} (I hope you won't!):");
+            helpMsg.AppendLine($"UNJOIN: Unsubscribe from {GeneralConstants.APP_NAME} (I hope you won't!):");
             helpMsg.AppendLine("HELP?: displays this list of commands:");
 
             return (helpMsg.ToString());
