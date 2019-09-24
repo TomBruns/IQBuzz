@@ -34,6 +34,8 @@ namespace WP.Learning.BizLogic.Shared
         public static string JOES_PHONE_NO = @"+12197304960";
 
         public static string JAKES_PHONE_NO = @"+12177780620";
+
+        public static decimal FAF_CONVIENENCE_FEE = 1.50M;
     }
 }
 ;

@@ -229,6 +229,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 welcomeMsg.AppendLine("You have already confirmed enrollment.");
             }
 
+            welcomeMsg.AppendLine("You can unsubscribe now or at any time by texting UNJOIN to the number this message came from.");
+
             return welcomeMsg.ToString();
         }
 
@@ -305,21 +307,22 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 returnMsg.AppendLine($"If you have questions about iQBuzz, please give us a call anytime! {GeneralConstants.WORLDPAY_CONTACT_CENTER_PHONE_NO}");
             }
 
-            return returnMsg.ToString(); ;
+            return returnMsg.ToString();
         }
 
         // Command: Unjoin
         public static string ResetAcceptedJoin(int userId)
         {
+            // reset user acceptance
             var user = MongoDBContext.FindIQBuzzUser(userId);
-
             user.has_accepted_welcome_agreement = false;
-
             MongoDBContext.UpdateIQBUzzUser(user);
 
-            string returnMsg = "Welcome Acceptance reset";
+            StringBuilder returnMsg = new StringBuilder();
+            returnMsg.AppendLine($"OK, I won't send you any messages until you tell me to. To do that, simply text JOIN to my number again!");
+            returnMsg.AppendLine($"If you have questions about iQBuzz, please give us a call anytime! {GeneralConstants.WORLDPAY_CONTACT_CENTER_PHONE_NO}");
 
-            return returnMsg;
+            return returnMsg.ToString();
         }
 
         #endregion

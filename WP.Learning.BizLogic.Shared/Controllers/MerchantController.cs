@@ -420,95 +420,80 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         #region === FAF Messages =========================================
         
         // Command: FAF
-        public static string BuildFAFMessage(int merchantId)
+        public static string BuildFAFMessage(List<int> merchantIds, DateTime xctPostingDateUTC)
         {
-            DateTime activityDate = DateTime.Now.ToUniversalTime();
+            StringBuilder response = new StringBuilder();
 
-            string response = string.Empty;
+            var merchant = MongoDBContext.FindMerchantById(merchantIds[0]);
+            string maskedAcctNo = $"x{merchant.setup_options.debit_card_no.Right(5)}";
 
-            var merchant = MongoDBContext.FindMerchantById(merchantId);
-            var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, activityDate);
+            response.AppendLine($"Reply CONFIRM to have today's settlement sent to your debit card account ending in {maskedAcctNo}. A convenience fee of {GeneralConstants.FAF_CONVIENENCE_FEE:C} will be deducted from your settlement deposit, and it will show in your Merchant Processing statement. The funds will be available no later than tomorrow morning!");
 
-            if (merchantDailyActivity == null)
-            {
-                merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = activityDate };
-                MongoDBContext.InsertMerchantDailyActivity(merchantDailyActivity);
-            }
-
-            if (!merchantDailyActivity.is_fast_access_funding_enabled.HasValue
-                || !merchantDailyActivity.is_fast_access_funding_enabled.Value)
-            {
-                response = $"Reply CONFIRM to have today's settlement deposited into debit card account ending in {merchant.setup_options.debit_card_no.Right(4)} tomorrow morning upon batch close.";
-            }
-            else
-            {
-                response = $"Reply UNDO to NOT use Fast Access Funding for today's settlement and have it deposited on the normal schedule.";
-            }
-
-            return response;
+            return response.ToString();
         }
 
         // Command: Confirm
-        public static string BuildConfirmFAFMessage(int merchantId)
+        public static string BuildConfirmFAFMessage(List<int> merchantIds, DateTime xctPostingDateUTC)
         {
-            DateTime activityDate = DateTime.Now.ToUniversalTime();
+            StringBuilder response = new StringBuilder();
 
-            string response = string.Empty;
+            var merchant = MongoDBContext.FindMerchantById(merchantIds[0]);
+            string maskedAcctNo = $"x{merchant.setup_options.debit_card_no.Right(5)}";
 
-            var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, activityDate);
+            MarkBatchesForFAF(merchantIds, xctPostingDateUTC);
 
-            if (merchantDailyActivity == null)
+            decimal netSettlementAmount = GetNetSettlementAmount(merchantIds, xctPostingDateUTC);
+
+            response.AppendLine($"OK! We will deposit today's settlement funds via FAST ACCESS FUNDING to your debit card account ending in {maskedAcctNo}");
+            response.AppendLine($"(Deposit amount: {netSettlementAmount:C} MINUS {GeneralConstants.FAF_CONVIENENCE_FEE:C} convenience fee)");
+
+            return response.ToString();
+        }
+
+        private static void MarkBatchesForFAF(List<int> merchantIds, DateTime xctPostingDateUTC)
+        {
+            foreach(int merchantId in merchantIds)
             {
-                merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = activityDate };
-                MongoDBContext.InsertMerchantDailyActivity(merchantDailyActivity);
-            }
+                var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDateUTC);
 
-            if (!merchantDailyActivity.is_fast_access_funding_enabled.HasValue
-                 || !merchantDailyActivity.is_fast_access_funding_enabled.Value)
-            {
-                response = @"Funds for the Final Settlement amount will now be deposited via FastAccess tomorrow morning.";
+                if (merchantDailyActivity == null)
+                {
+                    merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = xctPostingDateUTC };
+                    MongoDBContext.InsertMerchantDailyActivity(merchantDailyActivity);
+                }
 
                 merchantDailyActivity.is_fast_access_funding_enabled = true;
                 MongoDBContext.UpdateMerchantDailyActivity(merchantDailyActivity);
             }
-            else
-            {
-                response = @"Funds for the Final Settlement amount are already set to be deposited via FastAccess tomorrow morning.";
-            }
-
-            return response;
         }
 
         // Command: Undo
-        public static string BuildUndoFAFMessage(int merchantId)
+        public static string BuildUndoFAFMessage(List<int> merchantIds, DateTime xctPostingDateUTC)
         {
-            DateTime activityDate = DateTime.Now.ToUniversalTime();
+            StringBuilder response = new StringBuilder();
 
-            string response = string.Empty;
+            UnMarkBatchesForFAF(merchantIds, xctPostingDateUTC);
 
-            var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, activityDate);
+            response.AppendLine(@"Funds for this Final Settlement amount will Not use Fast Access Funding and will be deposited on the normal date.");
 
-            if (merchantDailyActivity == null)
+            return response.ToString();
+        }
+
+        private static void UnMarkBatchesForFAF(List<int> merchantIds, DateTime xctPostingDateUTC)
+        {
+            foreach (int merchantId in merchantIds)
             {
-                merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = activityDate };
-                MongoDBContext.InsertMerchantDailyActivity(merchantDailyActivity);
-            }
+                var merchantDailyActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, xctPostingDateUTC);
 
-            if (!merchantDailyActivity.is_fast_access_funding_enabled.HasValue
-                 || !merchantDailyActivity.is_fast_access_funding_enabled.Value)
-            {
-                response = @"Funds for this Final Settlement amount are already set Not to use Fast Access Funding.";
-            }
-            else
-            {
-                response = @"Funds for this Final Settlement amount will Not use Fast Access Funding and will be deposited on the normal date.";
+                if (merchantDailyActivity == null)
+                {
+                    merchantDailyActivity = new MerchantDailyActivityMBE() { merchant_id = merchantId, xct_posting_date = xctPostingDateUTC };
+                    MongoDBContext.InsertMerchantDailyActivity(merchantDailyActivity);
+                }
 
-                var merchantActivity = MongoDBContext.FindMerchantDailyActivity(merchantId, activityDate);
-                merchantActivity.is_fast_access_funding_enabled = false;
-                MongoDBContext.UpdateMerchantDailyActivity(merchantActivity);
+                merchantDailyActivity.is_fast_access_funding_enabled = false;
+                MongoDBContext.UpdateMerchantDailyActivity(merchantDailyActivity);
             }
-
-            return response;
         }
 
         #endregion
@@ -532,6 +517,42 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             var merchant = MongoDBContext.FindMerchantById(merchantId);
 
             return merchant;
+        }
+
+        private static decimal GetNetSettlementAmount(List<int> merchantIds, DateTime xctPostingDate)
+        {
+            var xctDailySummaries = GetXctDailySummaries(merchantIds, xctPostingDate);
+
+            decimal netSettlementAmount = 0.0M;
+
+            foreach (var xctDailySummary in xctDailySummaries)
+            {
+                // cp sales
+                if (xctDailySummary.CPSalesSummary != null)
+                {
+                    netSettlementAmount += xctDailySummary.CPSalesSummary.SuccessXctSubtotalValue;
+                }
+
+                // cnp sales
+                if (xctDailySummary.CNPSalesSummary != null)
+                {
+                    netSettlementAmount += xctDailySummary.CNPSalesSummary.SuccessXctSubtotalValue;
+                }
+
+                // cp returns
+                if (xctDailySummary.CPReturnsSummary != null)
+                {
+                    netSettlementAmount += xctDailySummary.CPReturnsSummary.SuccessXctSubtotalValue;
+                }
+
+                // cnp returns
+                if (xctDailySummary.CNPReturnsSummary != null)
+                {
+                    netSettlementAmount += xctDailySummary.CNPReturnsSummary.SuccessXctSubtotalValue;
+                }
+            }
+
+            return netSettlementAmount;
         }
 
         private static List<XctDailySummaryBE> GetXctDailySummaries(List<int> merchantIds, DateTime xctPostingDate)

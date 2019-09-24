@@ -112,15 +112,15 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             }
             else if (requestBody == @"faf")     // fast access funding
             {
-                responseMsgs.Add(MerchantController.BuildFAFMessage(user.merchant_ids[0]));
+                responseMsgs.Add(MerchantController.BuildFAFMessage(user.merchant_ids, currentUTCDT.Date));
             }
             else if (requestBody == @"confirm") // confirm faf request
             {
-                responseMsgs.Add(MerchantController.BuildConfirmFAFMessage(user.merchant_ids[0]));
+                responseMsgs.Add(MerchantController.BuildConfirmFAFMessage(user.merchant_ids, currentUTCDT.Date));
             }
             else if (requestBody == @"undo")    // undo faf request
             {
-                responseMsgs.Add(MerchantController.BuildUndoFAFMessage(user.merchant_ids[0]));
+                responseMsgs.Add(MerchantController.BuildUndoFAFMessage(user.merchant_ids, currentUTCDT.Date));
             }
             else if (requestBody == @"batch-miss")
             {
@@ -231,7 +231,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 helpMsg.AppendLine("batch-ok: send received ok msg");
                 helpMsg.AppendLine("batch-err: send received err msg");
                 helpMsg.AppendLine("batch-auto: set auto close");
-                helpMsg.AppendLine("welcome: set welcome msg");
+                helpMsg.AppendLine("welcome: send welcome msg");
 
                 responseMsgs.Add(helpMsg.ToString());
             }
@@ -262,7 +262,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             StringBuilder helpMsg = new StringBuilder();
 
             helpMsg.AppendLine("--------------------------------------------------------");
-            helpMsg.AppendLine("Hint: These are not case sensitive");
+            helpMsg.AppendLine("Hint: Commands are not case sensitive");
             helpMsg.AppendLine("--------------------------------------------------------");
             helpMsg.AppendLine("SUMMARY: today's summary of all stores and online activity:");
             helpMsg.AppendLine("SALES: today's sales figures by store and online:");
