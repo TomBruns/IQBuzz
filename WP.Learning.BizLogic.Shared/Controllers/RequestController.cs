@@ -52,7 +52,14 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             // ===================================================
             if (requestBody == @"join" || requestBody == @"start")    // user requests to join
             {
-                responseMsgs.Add(UserController.BuildJoinMessage(user.user_id));
+                if (user.has_seen_welcome_message)
+                {
+                    responseMsgs.Add(UserController.BuildJoinMessage(user.user_id));
+                }
+                else
+                {
+                    UserController.SendWelcomeMessage(user.user_id);
+                }
             }
             else if (requestBody == @"welcome")     // send welcome msg
             {
@@ -61,6 +68,10 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             else if (requestBody == @"yes")     // confirm & accept welcome msg
             { 
                 responseMsgs.Add(UserController.StoreAcceptWelcomeMessageResponse(user.user_id, true));
+            }
+            else if (requestBody == @"unwelcome")     // send welcome msg
+            {
+                UserController.ResetHasSeenWelcomeMessageFlag(user.user_id);
             }
             else if (!user.has_accepted_welcome_agreement)
             {
@@ -172,14 +183,16 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             }
             else if (requestBody == @"usage" || requestBody == @"stats")    // display usage stats
             {
-                DateTime currentUserDT = DateTimeUtilities.CovertToUserLocalDT(DateTime.Now.ToUniversalTime(), user.local_time_zone);
+                DateTime currentUserDT = DateTimeUtilities.CovertToUserLocalDT(currentUTCDT, user.local_time_zone);
                 DateTime fromDate = currentUserDT.Date;
+                TimeZone localZone = TimeZone.CurrentTimeZone;
 
                 List<UserDailyUsageSummaryBE> usage = UserController.GetUserActivitySummaryByDay(fromDate, user.local_time_zone);
 
                 StringBuilder msg = new StringBuilder();
                 msg.AppendLine($"{GeneralConstants.APP_NAME} usage stats: {fromDate.AddDays(-5):MMM d} to {fromDate:MMM d}");
                 msg.AppendLine($"  (as of { currentUserDT.ToString("ddd MMM dd, yyyy h:mm tt")})");
+                msg.AppendLine($"  (Server Local Time{ DateTime.Now.ToString("ddd MMM dd, yyyy h:mm tt")}), TZ: {localZone.StandardName}");
                 msg.AppendLine("----------------------------------");
 
                 // get a list of unique user entities from the collection
@@ -232,6 +245,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 helpMsg.AppendLine("batch-err: send received err msg");
                 helpMsg.AppendLine("batch-auto: set auto close");
                 helpMsg.AppendLine("welcome: send welcome msg");
+                helpMsg.AppendLine("unwelcome: reset welcome msg flag");
 
                 responseMsgs.Add(helpMsg.ToString());
             }

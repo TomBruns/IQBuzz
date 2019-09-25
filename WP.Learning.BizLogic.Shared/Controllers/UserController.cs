@@ -93,6 +93,16 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             CreateUser(user, isDeleteIfExists);
         }
 
+        internal static void ResetHasSeenWelcomeMessageFlag(int user_id)
+        {
+            // get merchant metadata (MDB ??)
+            var user = MongoDBContext.FindIQBuzzUser(user_id);
+
+            user.has_seen_welcome_message = false;
+
+            MongoDBContext.UpdateIQBUzzUser(user);
+        }
+
         public static string BuildUserInfoMsg(IQBuzzUserBE user)
         {
             StringBuilder returnMsg = new StringBuilder();
@@ -215,7 +225,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
 
             welcomeMsg.AppendLine($"Hello, {iqBuzzUser.FullName}!");
             welcomeMsg.AppendLine();
-            welcomeMsg.AppendLine($"On behalf of FIS, thank you for trusting us with payment acceptance for");
+            welcomeMsg.AppendLine($"On behalf of {GeneralConstants.COMPANY_NAME}, thank you for trusting us with payment acceptance for");
             welcomeMsg.AppendLine(merchantList.ToString());
             //welcomeMsg.AppendLine();
             welcomeMsg.AppendLine("My name is Buzz, and I’ll keep you informed of key activity on your account.");
@@ -230,6 +240,9 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             }
 
             welcomeMsg.AppendLine("You can unsubscribe now or at any time by texting UNJOIN to the number this message came from.");
+            welcomeMsg.AppendLine();
+            welcomeMsg.AppendLine($"As a reminder, here is a list of commands that I understand:");
+            welcomeMsg.AppendLine(RequestController.BuildHelpMessage());
 
             return welcomeMsg.ToString();
         }
@@ -245,6 +258,11 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             var welcomeMsg = BuildWelcomeMessage(user);
 
             SMSController.SendSMSMessage(user.phone_no, $"{welcomeMsg}");
+
+            // hack for now
+            var updatedUser = MongoDBContext.FindIQBuzzUser(userId);
+            updatedUser.has_seen_welcome_message = true;
+            MongoDBContext.UpdateIQBUzzUser(updatedUser);
         }
 
         /// <summary>
@@ -384,7 +402,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"xtobr39@hotmail.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
-                        merchant_ids = new List<int>() { 1, 2 },
+                        has_seen_welcome_message = true,
+                        merchant_ids = new List<int>() { 1, 2, 10, 11, 12, 13 },
                         language_code = LanguageType.ENGLISH.ToString()
                     }
                 },
@@ -398,7 +417,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Marco.Fernandes@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
-                        merchant_ids = new List<int>() { 1, 2 },
+                        has_seen_welcome_message = true,
+                        merchant_ids = new List<int>() { 1, 2, 10, 11, 12, 13 },
                         language_code = LanguageType.ENGLISH.ToString()
                     }
                 },
@@ -412,6 +432,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Dusty.Gomez@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
+                        has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 3 },
                         language_code = LanguageType.ENGLISH.ToString()
                     }
@@ -426,6 +447,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Joshua.Byrne@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
+                        has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 4 },
                         language_code = LanguageType.ENGLISH.ToString()
                     }
@@ -440,6 +462,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Axex.Boeding@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
+                        has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 5 },
                         language_code = LanguageType.ENGLISH.ToString()
                     }
@@ -454,6 +477,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Pallavi.Sher@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
+                        has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 6 },
                         language_code = LanguageType.ENGLISH.ToString()
                     }
@@ -468,6 +492,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Joe.Pellar@worldpay.com",
                         local_time_zone = @"CST",
                         has_accepted_welcome_agreement = true,
+                        has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 7 },
                         language_code = LanguageType.ENGLISH.ToString()
                     }
@@ -482,6 +507,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Jianan.Hou@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
+                        has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 8 },
                         language_code = LanguageType.ENGLISH.ToString()
                     }
@@ -496,7 +522,68 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         email_address = @"Jon.Pollock@worldpay.com",
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
+                        has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 9 },
+                        language_code = LanguageType.ENGLISH.ToString()
+                    }
+                },
+                //=================================
+                {
+                    10, new IQBuzzUserMBE()
+                    {
+                        user_id = 10,
+                        first_name = @"Per",
+                        last_name = @"Karlsson",
+                        phone_no = @"+19043496964",
+                        email_address = @"tbd",
+                        local_time_zone = @"EST",
+                        has_accepted_welcome_agreement = true,
+                        has_seen_welcome_message = false,
+                        merchant_ids = new List<int>() { 10 },
+                        language_code = LanguageType.ENGLISH.ToString()
+                    }
+                },
+                {
+                    11, new IQBuzzUserMBE()
+                    {
+                        user_id = 11,
+                        first_name = @"Richard",
+                        last_name = @"Galbraith",
+                        phone_no = @"+18563136804",
+                        email_address = @"tbd",
+                        local_time_zone = @"EST",
+                        has_accepted_welcome_agreement = true,
+                        has_seen_welcome_message = false,
+                        merchant_ids = new List<int>() { 11 },
+                        language_code = LanguageType.ENGLISH.ToString()
+                    }
+                },
+                {
+                    12, new IQBuzzUserMBE()
+                    {
+                        user_id = 12,
+                        first_name = @"Susheel",
+                        last_name = @"Nesargi",
+                        phone_no = @"+19042549619",
+                        email_address = @"tbd",
+                        local_time_zone = @"EST",
+                        has_accepted_welcome_agreement = true,
+                        has_seen_welcome_message = false,
+                        merchant_ids = new List<int>() { 12 },
+                        language_code = LanguageType.ENGLISH.ToString()
+                    }
+                },
+                {
+                    13, new IQBuzzUserMBE()
+                    {
+                        user_id = 13,
+                        first_name = @"Warren",
+                        last_name = @"Street",
+                        phone_no = @"+14042759741",
+                        email_address = @"tbd",
+                        local_time_zone = @"EST",
+                        has_accepted_welcome_agreement = true,
+                        merchant_ids = new List<int>() { 13 },
                         language_code = LanguageType.ENGLISH.ToString()
                     }
                 }

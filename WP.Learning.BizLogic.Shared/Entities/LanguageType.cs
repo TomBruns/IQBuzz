@@ -21,13 +21,13 @@ namespace WP.Learning.BizLogic.Shared.Entities
         }
 
         // https://cloud.google.com/translate/docs/languages?refresh=1
-        public static LanguageType ENGLISH = new LanguageType("en");
-        public static LanguageType FRENCH = new LanguageType("fr");
-        public static LanguageType SPANISH = new LanguageType("es");
-        public static LanguageType PORTUGUESE = new LanguageType("pt");
-        public static LanguageType GERMAN = new LanguageType("de");
-        public static LanguageType HINDI = new LanguageType("hi");
-        public static LanguageType SWEDISH = new LanguageType("sv");
+        public static readonly LanguageType ENGLISH = new LanguageType("en");
+        public static readonly LanguageType FRENCH = new LanguageType("fr");
+        public static readonly LanguageType SPANISH = new LanguageType("es");
+        public static readonly LanguageType PORTUGUESE = new LanguageType("pt");
+        public static readonly LanguageType GERMAN = new LanguageType("de");
+        public static readonly LanguageType HINDI = new LanguageType("hi");
+        public static readonly LanguageType SWEDISH = new LanguageType("sv");
 
         public static string GetDescription(string languageType)
         {
@@ -63,7 +63,6 @@ namespace WP.Learning.BizLogic.Shared.Entities
             sb.AppendLine($"{cmd}-es  for Spanish");
             sb.AppendLine($"{cmd}-pt  for Portuguese");
             sb.AppendLine($"{cmd}-de  for German");
-            sb.AppendLine($"{cmd}-hi  for Hindi");
             sb.AppendLine($"{cmd}-hi  for Hindi");
             sb.AppendLine($"{cmd}-sv  for Swedish");
 

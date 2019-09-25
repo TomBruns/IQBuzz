@@ -121,7 +121,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             // get summaries for a list of merchants
             List<XctDailySummaryBE> xctDailySummaries = MerchantController.GetXctDailySummaries(merchantIds, xctPostingDateUTC);
 
-            DateTime xctPostingDateUser = DateTimeUtilities.CovertToUserLocalDT(xctPostingDateUTC, userTZCode);
+            DateTime xctPostingDateUser = xctPostingDateUTC; // DateTimeUtilities.CovertToUserLocalDT(xctPostingDateUTC, userTZCode);
             DateTime currentUserDT = DateTimeUtilities.CovertToUserLocalDT(DateTime.Now.ToUniversalTime(), userTZCode);
             string currentUserTimeText = $"{currentUserDT.ToString("h:mm tt")} {userTZCode}";
 
@@ -130,7 +130,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             sb.AppendLine($"Merchant Account Summary for: {xctPostingDateUser:ddd MMM dd, yyyy} as of: {currentUserTimeText}");
             sb.AppendLine("---------------------------------------------------------");
             sb.AppendLine();
-            if (merchantIds.Count > 1) { sb.AppendLine($"For all {merchantIds.Count} stores and online:"); }
+            if (merchantIds.Count > 1) { sb.AppendLine($"For {merchantIds.Count} store(s) and online:"); }
             else { sb.AppendLine("For store and online:"); }
             sb.AppendLine();
 
@@ -244,7 +244,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             // get summaries for a list of merchants
             List<XctDailySummaryBE> xctDailySummaries = MerchantController.GetXctDailySummaries(merchantIds, xctPostingDateUTC);
 
-            DateTime xctPostingDateUser = DateTimeUtilities.CovertToUserLocalDT(xctPostingDateUTC, userTZCode);
+            DateTime xctPostingDateUser = xctPostingDateUTC; //DateTimeUtilities.CovertToUserLocalDT(xctPostingDateUTC, userTZCode);
             DateTime currentUserDT = DateTimeUtilities.CovertToUserLocalDT(DateTime.Now.ToUniversalTime(), userTZCode);
             string currentUserTimeText = $"{currentUserDT.ToString("h:mm tt")} {userTZCode}";
 
@@ -302,7 +302,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             // get summaries for a list of merchants
             List<XctDailySummaryBE> xctDailySummaries = MerchantController.GetXctDailySummaries(merchantIds, xctPostingDateUTC);
 
-            DateTime xctPostingDateUser = DateTimeUtilities.CovertToUserLocalDT(xctPostingDateUTC, userTZCode);
+            DateTime xctPostingDateUser = xctPostingDateUTC; //DateTimeUtilities.CovertToUserLocalDT(xctPostingDateUTC, userTZCode);
             DateTime currentUserDT = DateTimeUtilities.CovertToUserLocalDT(DateTime.Now.ToUniversalTime(), userTZCode);
             string currentUserTimeText = $"{currentUserDT.ToString("h:mm tt")} {userTZCode}";
 
@@ -359,7 +359,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
         {
             var merchantId = merchantIds[0];
 
-            DateTime xctPostingDateUser = DateTimeUtilities.CovertToUserLocalDT(xctPostingDateUTC, userTZCode);
+            DateTime xctPostingDateUser = xctPostingDateUTC; //DateTimeUtilities.CovertToUserLocalDT(xctPostingDateUTC, userTZCode);
             DateTime currentUserDT = DateTimeUtilities.CovertToUserLocalDT(DateTime.Now.ToUniversalTime(), userTZCode);
             string currentUserTimeText = $"{currentUserDT.ToString("h:mm tt")} {userTZCode}";
 
@@ -1174,6 +1174,99 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                             supports_cnp_sales_xcts = false,
                             supports_cp_sales_xcts = true,
                             supports_cnp_returns_xcts = false,
+                            supports_cp_returns_xcts = true
+                        },
+                        terminals = new List<TerminalMBE>()
+                        {
+                            new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
+                            new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
+                        }
+                    }
+                },
+                // ==============================================
+                {
+                    10, new MerchantMBE()
+                    {
+                        merchant_id = 10,
+                        merchant_name = @"The Crazy-Good Kanelbulle Shop",
+                        setup_options = new SetupOptionsMBE()
+                        {
+                            is_host_data_capture_enabled = true,
+                            auto_close_hh_mm = new TimeSpan(19, 0, 0),
+                            is_fast_funding_enabled = true,
+                            debit_card_no = @"123456789013481",
+                            supports_cnp_sales_xcts = true,
+                            supports_cp_sales_xcts = true,
+                            supports_cnp_returns_xcts = false,
+                            supports_cp_returns_xcts = true
+                        },
+                        terminals = new List<TerminalMBE>()
+                        {
+                            new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
+                            new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
+                        }
+                    }
+                },
+                {
+                    11, new MerchantMBE()
+                    {
+                        merchant_id = 11,
+                        merchant_name = @"Hillary-Rutherford Spirited Wines",
+                        setup_options = new SetupOptionsMBE()
+                        {
+                            is_host_data_capture_enabled = true,
+                            auto_close_hh_mm = new TimeSpan(19, 0, 0),
+                            is_fast_funding_enabled = true,
+                            debit_card_no = @"123456789075431",
+                            supports_cnp_sales_xcts = true,
+                            supports_cp_sales_xcts = true,
+                            supports_cnp_returns_xcts = true,
+                            supports_cp_returns_xcts = true
+                        },
+                        terminals = new List<TerminalMBE>()
+                        {
+                            new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
+                            new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
+                        }
+                    }
+                },
+                {
+                    12, new MerchantMBE()
+                    {
+                        merchant_id = 12,
+                        merchant_name = @"454 Translation Services, LLC",
+                        setup_options = new SetupOptionsMBE()
+                        {
+                            is_host_data_capture_enabled = true,
+                            auto_close_hh_mm = new TimeSpan(19, 0, 0),
+                            is_fast_funding_enabled = true,
+                            debit_card_no = @"1234567863063",
+                            supports_cnp_sales_xcts = true,
+                            supports_cp_sales_xcts = true,
+                            supports_cnp_returns_xcts = true,
+                            supports_cp_returns_xcts = true
+                        },
+                        terminals = new List<TerminalMBE>()
+                        {
+                            new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
+                            new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
+                        }
+                    }
+                },
+                {
+                    13, new MerchantMBE()
+                    {
+                        merchant_id = 13,
+                        merchant_name = @"Mosi-oa-Tunya Nature Tours",
+                        setup_options = new SetupOptionsMBE()
+                        {
+                            is_host_data_capture_enabled = true,
+                            auto_close_hh_mm = new TimeSpan(19, 0, 0),
+                            is_fast_funding_enabled = true,
+                            debit_card_no = @"12345696378",
+                            supports_cnp_sales_xcts = true,
+                            supports_cp_sales_xcts = true,
+                            supports_cnp_returns_xcts = true,
                             supports_cp_returns_xcts = true
                         },
                         terminals = new List<TerminalMBE>()

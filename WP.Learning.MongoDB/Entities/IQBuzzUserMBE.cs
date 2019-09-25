@@ -21,7 +21,7 @@ namespace WP.Learning.MongoDB.Entities
         public string email_address { get; set; }
         public string local_time_zone { get; set; }
         public bool has_accepted_welcome_agreement { get; set; }
-
+        public bool has_seen_welcome_message { get; set; }
         public string language_code { get; set; }
 
         public List<int> merchant_ids { get; set; }
