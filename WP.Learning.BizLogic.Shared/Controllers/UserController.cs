@@ -113,6 +113,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             returnMsg.AppendLine($"Phone No: {user.phone_no}");
             returnMsg.AppendLine($"Timezone: {user.local_time_zone}");
             returnMsg.AppendLine($"Prefered Language: {LanguageType.GetDescription(user.language_code)}");
+            returnMsg.AppendLine($"Admin?: {user.is_admin_user}");
             returnMsg.AppendLine($"  Hint: To chg your language text lang? back to me");
             returnMsg.AppendLine($"--------------------------------------");
             returnMsg.AppendLine($"You are currently receiving information for the following Businesses:");
@@ -124,8 +125,76 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             return returnMsg.ToString();
         }
 
+        internal static string SetupNewUser(int user_id, string[] msgParts)
+        {
+            StringBuilder returnMsg = new StringBuilder();
+
+            var currentUser = MongoDBContext.FindIQBuzzUser(user_id);
+
+            if (!currentUser.is_admin_user)
+            {
+                returnMsg.AppendLine($"Hi {currentUser.first_name}! Sorry this cmd is not available.");
+            }
+            else if (msgParts == null || msgParts.Length != 6)
+            {
+                returnMsg.AppendLine($"Expected Format: setup-<firstname>-<lastname>-<phoneno>");
+            }
+            else
+            {
+                string firstName = msgParts[1];
+                string lastName = msgParts[2];
+                string rawPhoneNo = $"{msgParts[3]}-{msgParts[4]}-{msgParts[5]}";
+
+                string phoneNo = PhoneNoUtilities.CleanUpPhoneNo(rawPhoneNo);
+
+                if(string.IsNullOrEmpty(phoneNo))
+                {
+                    returnMsg.AppendLine($"The PhoneNo: {rawPhoneNo} is not in the correct format,  Please format like 800-123-4567.");
+                }
+                else
+                {
+                    // check if the phone no is already registered
+                    var existingUser = MongoDBContext.FindIQBuzzUser(phoneNo);
+
+                    if (existingUser != null)
+                    {
+                        returnMsg.AppendLine($"Sorry {rawPhoneNo} is already regstered.");
+                    }
+                    else
+                    {
+                        // get the next user id
+                        var allCurrentUsers = MongoDBContext.GetAllIQBuzzUsers();
+                        int maxCurrentUserID = allCurrentUsers.Max(u => u.user_id);
+                        int newUserID = ++maxCurrentUserID;
+
+                        // We are ready to create a new user
+                        var newUser = new IQBuzzUserMBE()
+                        {
+                            user_id = newUserID,
+                            first_name = firstName,
+                            last_name = lastName,
+                            phone_no = phoneNo,
+                            email_address = @"donotreply@hotmail.com",
+                            local_time_zone = @"EST",
+                            has_accepted_welcome_agreement = false,
+                            has_seen_welcome_message = false,
+                            merchant_ids = currentUser.merchant_ids,
+                            language_code = LanguageType.ENGLISH.ToString(),
+                            is_admin_user = false
+                        };
+
+                        CreateUser(newUser, false);
+
+                        returnMsg.AppendLine($"New User: [{newUserID}] {firstName} {lastName} {phoneNo}");
+                    }
+                }
+            }
+
+            return returnMsg.ToString();
+        }
+
         #endregion
-       
+
         #region === User Activity ================================================================
 
         public static void LogUserActivity(UserActivityMBE userActivity)
@@ -390,7 +459,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
 
         private static Dictionary<int, IQBuzzUserMBE> BuildUsersLU()
         {
-            Dictionary<int, IQBuzzUserMBE> usersLU= new Dictionary<int, IQBuzzUserMBE>()
+            Dictionary<int, IQBuzzUserMBE> usersLU = new Dictionary<int, IQBuzzUserMBE>()
             {
                 {
                     1, new IQBuzzUserMBE()
@@ -404,7 +473,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         has_accepted_welcome_agreement = true,
                         has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 1, 2, 10, 11, 12, 13 },
-                        language_code = LanguageType.ENGLISH.ToString()
+                        language_code = LanguageType.ENGLISH.ToString(),
+                        is_admin_user = true
                     }
                 },
                 {
@@ -418,8 +488,9 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
                         has_seen_welcome_message = true,
-                        merchant_ids = new List<int>() { 1, 2, 10, 11, 12, 13 },
-                        language_code = LanguageType.ENGLISH.ToString()
+                        merchant_ids = new List<int>() { 1, 2 },
+                        language_code = LanguageType.ENGLISH.ToString(),
+                        is_admin_user = true
                     }
                 },
                 {
@@ -434,7 +505,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         has_accepted_welcome_agreement = true,
                         has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 3 },
-                        language_code = LanguageType.ENGLISH.ToString()
+                        language_code = LanguageType.ENGLISH.ToString(),
+                        is_admin_user = false
                     }
                 },
                 {
@@ -449,7 +521,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         has_accepted_welcome_agreement = true,
                         has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 4 },
-                        language_code = LanguageType.ENGLISH.ToString()
+                        language_code = LanguageType.ENGLISH.ToString(),
+                        is_admin_user = false
                     }
                 },
                 {
@@ -464,7 +537,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         has_accepted_welcome_agreement = true,
                         has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 5 },
-                        language_code = LanguageType.ENGLISH.ToString()
+                        language_code = LanguageType.ENGLISH.ToString(),
+                        is_admin_user = false
                     }
                 },
                 {
@@ -479,7 +553,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         has_accepted_welcome_agreement = true,
                         has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 6 },
-                        language_code = LanguageType.ENGLISH.ToString()
+                        language_code = LanguageType.ENGLISH.ToString(),
+                        is_admin_user = false
                     }
                 },
                 {
@@ -494,7 +569,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         has_accepted_welcome_agreement = true,
                         has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 7 },
-                        language_code = LanguageType.ENGLISH.ToString()
+                        language_code = LanguageType.ENGLISH.ToString(),
+                        is_admin_user = false
                     }
                 },
                 {
@@ -509,7 +585,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         has_accepted_welcome_agreement = true,
                         has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 8 },
-                        language_code = LanguageType.ENGLISH.ToString()
+                        language_code = LanguageType.ENGLISH.ToString(),
+                        is_admin_user = false
                     }
                 },
                 {
@@ -524,9 +601,12 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         has_accepted_welcome_agreement = true,
                         has_seen_welcome_message = true,
                         merchant_ids = new List<int>() { 9 },
-                        language_code = LanguageType.ENGLISH.ToString()
+                        language_code = LanguageType.ENGLISH.ToString(),
+                        is_admin_user = false
                     }
                 },
+                //=================================
+                // FIS Runoff Judges
                 //=================================
                 {
                     10, new IQBuzzUserMBE()
@@ -540,7 +620,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         has_accepted_welcome_agreement = true,
                         has_seen_welcome_message = false,
                         merchant_ids = new List<int>() { 10 },
-                        language_code = LanguageType.ENGLISH.ToString()
+                        language_code = LanguageType.ENGLISH.ToString(),
+                        is_admin_user = false
                     }
                 },
                 {
@@ -555,7 +636,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         has_accepted_welcome_agreement = true,
                         has_seen_welcome_message = false,
                         merchant_ids = new List<int>() { 11 },
-                        language_code = LanguageType.ENGLISH.ToString()
+                        language_code = LanguageType.ENGLISH.ToString(),
+                        is_admin_user = false
                     }
                 },
                 {
@@ -570,7 +652,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         has_accepted_welcome_agreement = true,
                         has_seen_welcome_message = false,
                         merchant_ids = new List<int>() { 12 },
-                        language_code = LanguageType.ENGLISH.ToString()
+                        language_code = LanguageType.ENGLISH.ToString(),
+                        is_admin_user = false
                     }
                 },
                 {
@@ -584,7 +667,27 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         local_time_zone = @"EST",
                         has_accepted_welcome_agreement = true,
                         merchant_ids = new List<int>() { 13 },
-                        language_code = LanguageType.ENGLISH.ToString()
+                        language_code = LanguageType.ENGLISH.ToString(),
+                        is_admin_user = false
+                    }
+                },
+                //=================================
+                // Alex & Josh's Boss
+                //=================================
+                {
+                    14, new IQBuzzUserMBE()
+                    {
+                        user_id = 14,
+                        first_name = @"Nicole",
+                        last_name = @"Jass",
+                        phone_no = @"+18182742049",
+                        email_address = @"tbd",
+                        local_time_zone = @"EST",
+                        has_accepted_welcome_agreement = false,
+                        has_seen_welcome_message = false,
+                        merchant_ids = new List<int>() { 4, 5 },
+                        language_code = LanguageType.ENGLISH.ToString(),
+                        is_admin_user = false
                     }
                 }
             };

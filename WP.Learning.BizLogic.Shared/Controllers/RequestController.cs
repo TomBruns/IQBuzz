@@ -85,6 +85,11 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             {
                 responseMsgs.Add(UserController.BuildUserInfoMsg(user));
             }
+            else if (requestBody.StartsWith(@"setup"))    // setup new user
+            {
+                string[] msgParts = requestBody.Split('-');
+                responseMsgs.Add(UserController.SetupNewUser(user.user_id, msgParts));
+            }
             else if (requestBody == @"lang?" || requestBody == @"lang")
             {
                 responseMsgs.Add(LanguageType.GetSupportedLanguages(@"lang"));

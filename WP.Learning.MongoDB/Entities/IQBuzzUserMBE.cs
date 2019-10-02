@@ -23,6 +23,7 @@ namespace WP.Learning.MongoDB.Entities
         public bool has_accepted_welcome_agreement { get; set; }
         public bool has_seen_welcome_message { get; set; }
         public string language_code { get; set; }
+        public bool is_admin_user { get; set; }
 
         public List<int> merchant_ids { get; set; }
 
