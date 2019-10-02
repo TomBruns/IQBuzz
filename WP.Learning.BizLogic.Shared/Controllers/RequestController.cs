@@ -251,6 +251,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 helpMsg.AppendLine("batch-auto: set auto close");
                 helpMsg.AppendLine("welcome: send welcome msg");
                 helpMsg.AppendLine("unwelcome: reset welcome msg flag");
+                helpMsg.AppendLine("setup: setup a new user");
 
                 responseMsgs.Add(helpMsg.ToString());
             }

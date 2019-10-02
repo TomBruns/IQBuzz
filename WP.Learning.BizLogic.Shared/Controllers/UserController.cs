@@ -185,7 +185,9 @@ namespace WP.Learning.BizLogic.Shared.Controllers
 
                         CreateUser(newUser, false);
 
-                        returnMsg.AppendLine($"New User: [{newUserID}] {firstName} {lastName} {phoneNo}");
+                        SendWelcomeMessage(newUser.user_id);
+
+                        returnMsg.AppendLine($"New User: [{newUser.user_id}] {newUser.first_name} {newUser.last_name} {newUser.phone_no}");
                     }
                 }
             }
