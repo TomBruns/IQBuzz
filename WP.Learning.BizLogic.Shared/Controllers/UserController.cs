@@ -31,6 +31,23 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             return iqBuzzUser;
         }
 
+        public static IQBuzzUserBE GetIQBuzzUser(int userID)
+        {
+            IQBuzzUserBE iqBuzzUser = MongoDBContext.FindIQBuzzUser(userID).As<IQBuzzUserBE>();
+
+            foreach (var merchantId in iqBuzzUser.merchant_ids)
+            {
+                var merchant = MongoDBContext.FindMerchantById(merchantId);
+
+                if (merchant != null)
+                {
+                    iqBuzzUser.Merchants.Add(merchant);
+                }
+            }
+
+            return iqBuzzUser;
+        }
+
         public static void CreateAllUsers(bool isDeleteIfExists)
         {
             Dictionary<int, IQBuzzUserMBE> usersLU = BuildUsersLU();

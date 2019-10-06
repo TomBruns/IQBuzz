@@ -180,16 +180,42 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             }
             else if (requestBody == @"genxcts" || requestBody == @"gen") // generate random xcts for today
             {
-                int xctGeneratedCount = 0;
-                int merchantsCount = 0;
-                foreach (var merchant in user.Merchants)
-                {
-                    merchantsCount++;
-
-                    xctGeneratedCount += MerchantController.GenerateSampleXcts(merchant.merchant_id, currentUTCDT.Date);
-                }
+                (int xctGeneratedCount, int merchantsCount) = GenSampleXcts(user, currentUTCDT);
 
                 responseMsgs.Add($"[{xctGeneratedCount}] random xcts generated across [{merchantsCount}] merchants and posted to {currentUTCDT.Date:M/dd/yyyy}");
+            }
+            else if (requestBody.StartsWith(@"genxcts"))    // gen xcts for a specifc user
+            {
+                if(user.is_admin_user)
+                {
+                    string[] msgParts = requestBody.Split('-');
+
+                    if (msgParts.Length != 2)
+                    {
+                        responseMsgs.Add($"Usage: genxcts-<userid>");
+                    }
+                    else
+                    {
+                        int targetUserID = 0;
+                        if (Int32.TryParse(msgParts[1], out targetUserID))
+                        {
+                           
+                            var targetUser = UserController.GetIQBuzzUser(targetUserID);
+
+                            (int xctGeneratedCount, int merchantsCount) = GenSampleXcts(targetUser, currentUTCDT);
+
+                            responseMsgs.Add($"[{xctGeneratedCount}] random xcts generated across [{merchantsCount}] merchants and posted to {currentUTCDT.Date:M/dd/yyyy}");
+                        }
+                        else
+                        {
+                            responseMsgs.Add($"[{msgParts[1]}] is not a valid userid");
+                        }   
+                    }
+                }
+                else
+                {
+                    responseMsgs.Add($"Sorry, this cmd is not available unless you are an admin.");
+                }
             }
             else if (requestBody == @"usage" || requestBody == @"stats")    // display usage stats
             {
@@ -257,6 +283,20 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             }
 
             return responseMsgs;
+        }
+
+        private static (int xctGeneratedCount, int merchantsCount) GenSampleXcts(IQBuzzUserBE user, DateTime currentUTCDT)
+        {
+            int xctGeneratedCount = 0;
+            int merchantsCount = 0;
+            foreach (var merchant in user.Merchants)
+            {
+                merchantsCount++;
+
+                xctGeneratedCount += MerchantController.GenerateSampleXcts(merchant.merchant_id, currentUTCDT.Date);
+            }
+
+            return (xctGeneratedCount, merchantsCount);
         }
 
         private static string TranslateRequest(string requestBody)
