@@ -926,6 +926,39 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             System.Console.ReadLine();
         }
 
+        public static int CreateMerchant(string newMerchantName)
+        {
+            var allMerchants = MongoDBContext.GetAllMerchants();
+            int maxCurrentMerchantID = allMerchants.Max(m => m.merchant_id);
+            int newMerchantID = ++maxCurrentMerchantID;
+
+            var newMerchant = new MerchantMBE()
+            {
+                merchant_id = newMerchantID,
+                merchant_name = newMerchantName,
+                setup_options = new SetupOptionsMBE()
+                {
+                    is_host_data_capture_enabled = true,
+                    auto_close_hh_mm = new TimeSpan(19, 0, 0),
+                    is_fast_funding_enabled = true,
+                    debit_card_no = @"1234567890123401",
+                    supports_cnp_sales_xcts = false,
+                    supports_cp_sales_xcts = true,
+                    supports_cnp_returns_xcts = false,
+                    supports_cp_returns_xcts = true
+                },
+                terminals = new List<TerminalMBE>()
+                            {
+                                new TerminalMBE() { terminal_id = "TID-001", terminal_type = @"610", terminal_desc = @"Checkout 1" },
+                                new TerminalMBE() { terminal_id = "TID-002", terminal_type = @"610", terminal_desc = @"Checkout 2" },
+                            }
+            };
+
+            MongoDBContext.InsertMerchant(newMerchant);
+
+            return newMerchantID;
+        }
+
         public static void CreateMerchant(int merchantId, bool isDeleteIfExists)
         {
             //  exists  isDeleteIfExists => Delete  Insert

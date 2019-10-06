@@ -125,7 +125,37 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             return returnMsg.ToString();
         }
 
-        internal static string SetupNewUser(int user_id, string[] msgParts)
+        public static string BuildUsersInfoMsg()
+        {
+            var users = MongoDBContext.GetAllIQBuzzUsers();
+
+            StringBuilder returnMsg = new StringBuilder();
+
+            returnMsg.AppendLine($"Current Users [{users.Count}]");
+            returnMsg.AppendLine($"--------------------------------------");
+
+            foreach(var user in users.OrderBy(u => u.user_id))
+            {
+            string admin = user.is_admin_user ? @"*" : string.Empty;
+
+            returnMsg.AppendLine($"[{user.user_id}{admin}] {user.first_name} {user.last_name} {user.phone_no}");
+
+                foreach (var merchantID in user.merchant_ids)
+                {
+                    var merchant = MerchantController.GetMerchant(merchantID);
+                    returnMsg.AppendLine($"-- {merchant.merchant_name}");
+                }
+            }
+
+            return returnMsg.ToString();
+        }
+
+        /// <summary>Setups the new user.</summary>
+        /// <param name="user_id">The user identifier.</param>
+        /// <param name="xctPostingDateUTC">The XCT posting date UTC.</param>
+        /// <param name="msgParts">The MSG parts.</param>
+        /// <returns>System.String.</returns>
+        internal static string SetupNewUser(int user_id, DateTime xctPostingDateUTC, string[] msgParts)
         {
             StringBuilder returnMsg = new StringBuilder();
 
@@ -135,15 +165,16 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             {
                 returnMsg.AppendLine($"Hi {currentUser.first_name}! Sorry this cmd is not available.");
             }
-            else if (msgParts == null || msgParts.Length != 6)
+            else if (msgParts == null || msgParts.Length != 7)
             {
-                returnMsg.AppendLine($"Expected Format: setup-<firstname>-<lastname>-<phoneno>");
+                returnMsg.AppendLine($"Expected Format: setup-<firstname>-<lastname>-<company name>-<123-456-789>");
             }
             else
             {
                 string firstName = msgParts[1];
                 string lastName = msgParts[2];
-                string rawPhoneNo = $"{msgParts[3]}-{msgParts[4]}-{msgParts[5]}";
+                string merchantName = msgParts[3];
+                string rawPhoneNo = $"{msgParts[4]}-{msgParts[5]}-{msgParts[6]}";
 
                 string phoneNo = PhoneNoUtilities.CleanUpPhoneNo(rawPhoneNo);
 
@@ -162,6 +193,10 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                     }
                     else
                     {
+                        // create a new merchant for this new user & auto gen some xct
+                        int newMerchantID = MerchantController.CreateMerchant(merchantName);
+                        MerchantController.GenerateSampleXcts(newMerchantID, xctPostingDateUTC);
+
                         // get the next user id
                         var allCurrentUsers = MongoDBContext.GetAllIQBuzzUsers();
                         int maxCurrentUserID = allCurrentUsers.Max(u => u.user_id);
@@ -178,7 +213,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                             local_time_zone = @"EST",
                             has_accepted_welcome_agreement = false,
                             has_seen_welcome_message = false,
-                            merchant_ids = currentUser.merchant_ids,
+                            merchant_ids = new List<int>() { newMerchantID },
                             language_code = LanguageType.ENGLISH.ToString(),
                             is_admin_user = false
                         };

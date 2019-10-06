@@ -71,6 +71,7 @@ namespace WP.Learning.BackOffice.Console
             System.Console.WriteLine("3.33  batch-err");
             System.Console.WriteLine("3.34  batch-auto");
             System.Console.WriteLine("");
+            System.Console.WriteLine("3.35  setup");
             System.Console.ForegroundColor = ConsoleColor.Magenta;
             System.Console.WriteLine("=== Merchant Admin ======================");
             System.Console.ForegroundColor = defaultColor;
@@ -259,6 +260,12 @@ namespace WP.Learning.BackOffice.Console
 
                 case 3.34M:  // usage
                     ProcessUserCommand(@"batch-auto");
+                    break;
+
+                case 3.35M:  // setup
+                    System.Console.Write("NewUser:> ");
+                    string newUserInfo = System.Console.ReadLine();
+                    ProcessUserCommand($"setup-{newUserInfo}");
                     break;
                 #endregion
 

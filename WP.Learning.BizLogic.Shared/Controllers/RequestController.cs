@@ -23,7 +23,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             // this variable will hold all the msgs to send in response to the incoming text 
             List<string> responseMsgs = new List<string>();
 
-            // try to lookup the merchant using the incoming phone number
+            // try to lookup the user texting us using the incoming phone number
             IQBuzzUserBE user = UserController.FindIQBuzzUser(fromPhoneNo);
 
             // ===================================================
@@ -47,8 +47,9 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 requestBody = TranslateRequest(requestBody);
             }
 
+            // TODO: Change the if/elseif code below to a switch statement for performance 
             // ===================================================
-            // Everything below here is supported before you have accepted the T&C
+            // Everything below here is supported BEFORE you have accepted the T&C
             // ===================================================
             if (requestBody == @"join" || requestBody == @"start")    // user requests to join
             {
@@ -69,7 +70,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             { 
                 responseMsgs.Add(UserController.StoreAcceptWelcomeMessageResponse(user.user_id, true));
             }
-            else if (requestBody == @"unwelcome")     // send welcome msg
+            else if (requestBody == @"unwelcome")     // reset user has seen welcome flag
             {
                 UserController.ResetHasSeenWelcomeMessageFlag(user.user_id);
             }
@@ -79,16 +80,20 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             }
 
             // =====================================================
-            // Everything below here requires you to have accepted the T&C first
+            // Everything below here is supported AFTER you have accepted the T&C
             // =====================================================
             else if (requestBody == @"user" || requestBody == @"whoami")    // display current user info
             {
                 responseMsgs.Add(UserController.BuildUserInfoMsg(user));
             }
+            else if (requestBody == @"users")    // display list of current users
+            {
+                responseMsgs.Add(UserController.BuildUsersInfoMsg());
+            }
             else if (requestBody.StartsWith(@"setup"))    // setup new user
             {
                 string[] msgParts = requestBody.Split('-');
-                responseMsgs.Add(UserController.SetupNewUser(user.user_id, msgParts));
+                responseMsgs.Add(UserController.SetupNewUser(user.user_id, currentUTCDT.Date, msgParts));
             }
             else if (requestBody == @"lang?" || requestBody == @"lang")
             {
@@ -201,7 +206,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 msg.AppendLine("----------------------------------");
 
                 // get a list of unique user entities from the collection
-                var uniqueUsers = usage.DistinctBy(u => u.IQBuzzUser.user_id).Select(u => u.IQBuzzUser).ToList();
+                var uniqueUsers = usage.DistinctBy(u => u.IQBuzzUser.user_id).Select(u => u.IQBuzzUser).OrderBy(u => u.user_id).ToList();
                     
                 // build a summary line for each unique user
                 foreach (var uniqueUser in uniqueUsers)
@@ -237,23 +242,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             }
             else if (requestBody == @"help+" || requestBody == @"help*")
             {
-                StringBuilder helpMsg = new StringBuilder();
-
-                helpMsg.AppendLine(" Additional Commands");
-                helpMsg.AppendLine("------------------------------");
-                helpMsg.AppendLine("unjoin: reverse join (for testing)");
-                helpMsg.AppendLine("ver: display software build d/t");
-                helpMsg.AppendLine("genxcts or gen: generate random xcts");
-                helpMsg.AppendLine("usage: display usage stats for last 5 days");
-                helpMsg.AppendLine("batch-miss: send missign batch msg");
-                helpMsg.AppendLine("batch-ok: send received ok msg");
-                helpMsg.AppendLine("batch-err: send received err msg");
-                helpMsg.AppendLine("batch-auto: set auto close");
-                helpMsg.AppendLine("welcome: send welcome msg");
-                helpMsg.AppendLine("unwelcome: reset welcome msg flag");
-                helpMsg.AppendLine("setup: setup a new user");
-
-                responseMsgs.Add(helpMsg.ToString());
+                responseMsgs.Add(BuildExtendedHelpMessage());
             }
             else
             {
@@ -293,6 +282,29 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             helpMsg.AppendLine("JOIN: re-send the welcome message:");
             helpMsg.AppendLine($"UNJOIN: Unsubscribe from {GeneralConstants.APP_NAME} (I hope you won't!):");
             helpMsg.AppendLine("HELP?: displays this list of commands:");
+
+            return (helpMsg.ToString());
+        }
+
+        public static string BuildExtendedHelpMessage()
+        {
+            StringBuilder helpMsg = new StringBuilder();
+
+            helpMsg.AppendLine("------------------------------");
+            helpMsg.AppendLine(" Additional Commands");
+            helpMsg.AppendLine("------------------------------");
+            helpMsg.AppendLine("unjoin: reverse join (for testing)");
+            helpMsg.AppendLine("ver: display software build d/t");
+            helpMsg.AppendLine("genxcts or gen: generate random xcts");
+            helpMsg.AppendLine("usage: display usage stats for last 5 days");
+            helpMsg.AppendLine("batch-miss: send missign batch msg");
+            helpMsg.AppendLine("batch-ok: send received ok msg");
+            helpMsg.AppendLine("batch-err: send received err msg");
+            helpMsg.AppendLine("batch-auto: set auto close");
+            helpMsg.AppendLine("welcome: send welcome msg");
+            helpMsg.AppendLine("unwelcome: reset welcome msg flag");
+            helpMsg.AppendLine("setup: setup a new user");
+            helpMsg.AppendLine("users: display list of all users");
 
             return (helpMsg.ToString());
         }
