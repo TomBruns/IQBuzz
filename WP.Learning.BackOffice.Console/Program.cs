@@ -95,6 +95,11 @@ namespace WP.Learning.BackOffice.Console
             System.Console.WriteLine("6.3   Send batch-err");
             System.Console.WriteLine("6.4   Send batch-auto");
             System.Console.WriteLine("");
+            System.Console.ForegroundColor = ConsoleColor.Magenta;
+            System.Console.WriteLine("=== Presto Demo Commands ===========================");
+            System.Console.ForegroundColor = defaultColor;
+            System.Console.WriteLine("7.1   Demo Step 1");
+            System.Console.WriteLine("");
             System.Console.WriteLine();
             System.Console.Write("Enter # or 0 to Exit");
             System.Console.ForegroundColor = ConsoleColor.Green;
@@ -337,6 +342,10 @@ namespace WP.Learning.BackOffice.Console
                     break;
 
                 #endregion
+
+                case 7.1M:  // Demo Step 1
+                    BatchController.SendBatchMissingMessage(userId);
+                    break;
 
                 case 99.0M: // test translate
                     string translation = TranslationController.Translate("Hello World.", "ru");

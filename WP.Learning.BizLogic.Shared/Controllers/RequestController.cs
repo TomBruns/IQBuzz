@@ -67,7 +67,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                 UserController.SendWelcomeMessage(user.user_id);
             }
             else if (requestBody == @"yes")     // confirm & accept welcome msg
-            { 
+            {
                 responseMsgs.Add(UserController.StoreAcceptWelcomeMessageResponse(user.user_id, true));
             }
             else if (requestBody == @"unwelcome")     // reset user has seen welcome flag
@@ -126,7 +126,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             {
                 responseMsgs.Add(MerchantController.BuildChargebackDetails(user.merchant_ids, currentUTCDT.Date, user.local_time_zone));
             }
-            else if (requestBody == @"returns" || requestBody == @"return" || requestBody == @"ret" 
+            else if (requestBody == @"returns" || requestBody == @"return" || requestBody == @"ret"
                         || requestBody == @"refunds" || requestBody == @"refund" || requestBody == @"ref")    // returns for today
             {
                 responseMsgs.Add(MerchantController.BuildReturnsSummaryMessage(user.merchant_ids, currentUTCDT.Date, user.local_time_zone));
@@ -186,7 +186,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             }
             else if (requestBody.StartsWith(@"genxcts"))    // gen xcts for a specifc user
             {
-                if(user.is_admin_user)
+                if (user.is_admin_user)
                 {
                     string[] msgParts = requestBody.Split('-');
 
@@ -199,7 +199,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         int targetUserID = 0;
                         if (Int32.TryParse(msgParts[1], out targetUserID))
                         {
-                           
+
                             var targetUser = UserController.GetIQBuzzUser(targetUserID);
 
                             (int xctGeneratedCount, int merchantsCount) = GenSampleXcts(targetUser, currentUTCDT);
@@ -209,12 +209,28 @@ namespace WP.Learning.BizLogic.Shared.Controllers
                         else
                         {
                             responseMsgs.Add($"[{msgParts[1]}] is not a valid userid");
-                        }   
+                        }
                     }
                 }
                 else
                 {
                     responseMsgs.Add($"Sorry, this cmd is not available unless you are an admin.");
+                }
+            }
+            else if (requestBody.StartsWith(@"presto"))    // drive the Presto demo
+            {
+                string[] msgParts = requestBody.Split('-');
+
+                int demoStep = 0;
+                if (Int32.TryParse(msgParts[1], out demoStep))
+                {
+                    var demoResponse = PrestoController.DriveDemo(fromPhoneNo, demoStep);
+
+                    responseMsgs.Add($"Presto step: [{demoStep}] => {demoResponse}");
+                }
+                else
+                {
+                    responseMsgs.Add($"[{msgParts[1]}] is not a valid Demo Step No");
                 }
             }
             else if (requestBody == @"usage" || requestBody == @"stats")    // display usage stats
@@ -233,7 +249,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
 
                 // get a list of unique user entities from the collection
                 var uniqueUsers = usage.DistinctBy(u => u.IQBuzzUser.user_id).Select(u => u.IQBuzzUser).OrderBy(u => u.user_id).ToList();
-                    
+
                 // build a summary line for each unique user
                 foreach (var uniqueUser in uniqueUsers)
                 {
@@ -345,6 +361,7 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             helpMsg.AppendLine("unwelcome: reset welcome msg flag");
             helpMsg.AppendLine("setup: setup a new user");
             helpMsg.AppendLine("users: display list of all users");
+            helpMsg.AppendLine("presto-#: drive a step in the Presto demo");
 
             return (helpMsg.ToString());
         }

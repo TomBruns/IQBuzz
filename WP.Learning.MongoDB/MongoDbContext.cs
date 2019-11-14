@@ -86,7 +86,11 @@ namespace WP.Learning.MongoDB
                     const string ATLAS_HOST_NAME = @"iqbuzzcluster-ueauw.azure.mongodb.net";
                     const int ATLAS_PORT_NUMBER = 27017;
                     const string ATLAS_USERNAME = @"IQBuzzMongoUser";
-                    const string ATLAS_PASSWORD = @"D4zUXpJDDBhqQi8w76IDgaipo8Azqr4NcVLJOajyuJQPEDW42GAUuAQUcQUVyDvx7uz95EDO2To7huauoS3O9w==";
+                    //const string ATLAS_PASSWORD = @"D4zUXpJDDBhqQi8w76IDgaipo8Azqr4NcVLJOajyuJQPEDW42GAUuAQUcQUVyDvx7uz95EDO2To7huauoS3O9w==";
+                    //const string ATLAS_PASSWORD = @"Q1NhZkdvb0dyOEtHTGNJQQ==";
+                    const string ATLAS_PASSWORD = @"CSafGooGr8KGLcIA";
+                    // Q1NhZkdvb0dyOEtHTGNJQQ==
+
 
                     client = new MongoClient($"mongodb+srv://{ATLAS_USERNAME}:{ATLAS_PASSWORD}@{ATLAS_HOST_NAME}/test?retryWrites=true");
 
