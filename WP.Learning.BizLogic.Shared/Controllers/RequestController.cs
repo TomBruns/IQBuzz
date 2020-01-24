@@ -219,14 +219,43 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             }
             else if (requestBody.StartsWith(@"presto"))    // drive the Presto demo
             {
+                // 0 presto
+                // 1 step
+                // 2 user
                 string[] msgParts = requestBody.Split('-');
 
                 int demoStep = 0;
                 if (Int32.TryParse(msgParts[1], out demoStep))
                 {
-                    var demoResponse = PrestoController.DriveDemo(fromPhoneNo, demoStep);
+                    if (demoStep == 0)
+                    {
+                        var demoReponseUserList = PrestoController.GetLast5Users();
+                        responseMsgs.Add($"Presto step: [{demoStep}] => Recent New users...");
 
-                    responseMsgs.Add($"Presto step: [{demoStep}] => {demoResponse}");
+                        var result = String.Join(System.Environment.NewLine, demoReponseUserList);
+                        responseMsgs.Add(result);
+
+                    }
+                    else if (msgParts.Length == 2)
+                    {
+                        var demoResponse = PrestoController.DriveDemo(fromPhoneNo, demoStep);
+
+                        responseMsgs.Add($"Presto step: [{demoStep}] => {demoResponse}");
+                    }
+                    else if (msgParts.Length == 3)
+                    {
+                        int userId = 0;
+                        if (Int32.TryParse(msgParts[2], out userId))
+                        {
+                            var demoResponse = PrestoController.DriveDemo(userId, demoStep);
+
+                            responseMsgs.Add($"Presto step#: [{demoStep}] => {demoResponse}");
+                        }
+                        else
+                        {
+                            responseMsgs.Add($"Presto step: [{demoStep}] => Invalid User: [{msgParts[2]}]");
+                        }
+                    }
                 }
                 else
                 {
@@ -361,7 +390,8 @@ namespace WP.Learning.BizLogic.Shared.Controllers
             helpMsg.AppendLine("unwelcome: reset welcome msg flag");
             helpMsg.AppendLine("setup: setup a new user");
             helpMsg.AppendLine("users: display list of all users");
-            helpMsg.AppendLine("presto-#: drive a step in the Presto demo");
+            helpMsg.AppendLine("presto-0: get a list of recent new presto users");
+            helpMsg.AppendLine("presto-x-y: drive step X ofr user Y in the Presto demo");
 
             return (helpMsg.ToString());
         }
